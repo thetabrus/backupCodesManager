@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Backup Codes Manager</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 20px;
+      }
+      textarea,
+      input,
+      button,
+      fieldset {
+        font-family: sans-serif;
+      }
+      textarea {
+        width: 100%;
+        height: 150px;
+        margin-bottom: 10px;
+      }
+      fieldset {
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #ccc;
+      }
+      .section-header {
+        display: flex;
+        align-items: center;
+        font-weight: bold;
+        margin-top: 16px;
+      }
+      .section-header input[type="checkbox"] {
+        margin-right: 8px;
+      }
+      input[type="text"] {
+        width: 100%;
+        padding: 5px;
+        box-sizing: border-box;
+        margin-bottom: 8px;
+      }
+      .codes-container {
+        margin: 8px 0;
+      }
+      .code-item {
+        display: flex;
+        align-items: center;
+        margin: 4px 0;
+      }
+      .code-item input[type="checkbox"] {
+        margin-right: 8px;
+      }
+      .code-item input[type="text"] {
+        flex: 1;
+        padding: 4px;
+        margin-right: 8px;
+      }
+      .code-item button {
+        padding: 4px 8px;
+      }
+      #addCodeBtn {
+        margin: 8px 0;
+      }
+      .master-check {
+        display: flex;
+        align-items: center;
+        margin: 16px 0;
+        font-weight: bold;
+      }
+      .master-check input[type="checkbox"] {
+        margin-right: 8px;
+      }
+      button {
+        padding: 8px 16px;
+        margin-right: 10px;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+      .error {
+        color: red;
+        margin-bottom: 12px;
+        display: block;
+      }
+      @media print {
+        body {
+          margin: 0;
+        }
+        .block {
+          width: 105mm;
+          height: 74mm;
+          box-sizing: border-box;
+          padding: 8mm;
+          page-break-after: always;
+        }
+        .block input[type="checkbox"] {
+          transform: scale(1.2);
+          margin-right: 6px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Backup 2FA Codes Manager</h1>
+    <div id="rawSection">
+      <p>Wklej surowy tekst z listą kodów zapasowych:</p>
+      <textarea id="rawInput" placeholder="Wklej surowy tekst..."></textarea>
+      <button id="parseBtn">Parsuj i edytuj</button>
+    </div>
+    <form id="editForm" style="display: none">
+      <fieldset>
+        <legend>Oryginalny tekst</legend>
+        <textarea
+          id="previewRaw"
+          readonly
+          style="width: 100%; height: 100px"
+        ></textarea>
+      </fieldset>
+      <fieldset>
+        <legend>Dane do wydruku</legend>
+        <div class="section-header">
+          <input type="checkbox" id="checkService" /><label for="serviceInput"
+            >Nazwa usługi</label
+          >
+        </div>
+        <input type="text" id="serviceInput" />
+        <div class="section-header">
+          <input type="checkbox" id="checkLogin" /><label for="loginInput"
+            >Mail/Login</label
+          >
+        </div>
+        <input type="text" id="loginInput" />
+        <div class="section-header">
+          <input type="checkbox" id="checkAllCodes" /><label>Lista kodów</label>
+        </div>
+        <div class="codes-container" id="codesContainer"></div>
+        <button type="button" id="addCodeBtn">+ Dodaj kod</button>
+        <div class="section-header">
+          <input type="checkbox" id="checkNote" /><label for="noteInput"
+            >Notatka</label
+          >
+        </div>
+        <input type="text" id="noteInput" />
+        <div class="section-header">
+          <input type="checkbox" id="checkDate" /><label for="dateInput"
+            >Data przetworzenia</label
+          >
+        </div>
+        <input type="text" id="dateInput" />
+        <div class="master-check">
+          <input type="checkbox" id="checkAllFields" /><label
+            for="checkAllFields"
+            >Wszystkie sekcje i kody sprawdzone</label
+          >
+        </div>
+        <span id="errorMsg" class="error"></span>
+        <button type="button" id="printBtn">Drukuj</button>
+        <button type="button" id="cancelBtn">Anuluj</button>
+      </fieldset>
+    </form>
+    <script>
+      const sectionIds = [
+        "checkService",
+        "checkLogin",
+        "checkNote",
+        "checkDate",
+      ];
+      function updateCodeMaster() {
+        const codeChecks = document.querySelectorAll(".code-check");
+        const masterCodes = document.getElementById("checkAllCodes");
+        masterCodes.checked =
+          codeChecks.length > 0 &&
+          Array.from(codeChecks).every((c) => c.checked);
+        updateFormMaster();
+      }
+      function updateFormMaster() {
+        const sectionsOk = sectionIds.every(
+          (id) => document.getElementById(id).checked
+        );
+        const codeChecks = document.querySelectorAll(".code-check");
+        const codesOk =
+          codeChecks.length > 0 &&
+          Array.from(codeChecks).every((c) => c.checked);
+        document.getElementById("checkAllFields").checked =
+          sectionsOk && codesOk;
+      }
+      function bindSectionCheckboxes() {
+        sectionIds.concat("checkAllCodes").forEach((id) => {
+          document.getElementById(id).addEventListener("change", () => {
+            if (id === "checkAllCodes") {
+              const checked = document.getElementById("checkAllCodes").checked;
+              document
+                .querySelectorAll(".code-check")
+                .forEach((c) => (c.checked = checked));
+            }
+            updateFormMaster();
+          });
+        });
+      }
+      function createCodeRow(val = "") {
+        const div = document.createElement("div");
+        div.className = "code-item";
+        const chk = document.createElement("input");
+        chk.type = "checkbox";
+        chk.className = "code-check";
+        const inp = document.createElement("input");
+        inp.type = "text";
+        inp.value = val;
+        const del = document.createElement("button");
+        del.type = "button";
+        del.textContent = "✖";
+        del.addEventListener("click", () => {
+          div.remove();
+          updateCodeMaster();
+        });
+        chk.addEventListener("change", updateCodeMaster);
+        div.append(chk, inp, del);
+        return div;
+      }
+      function addCode(val = "") {
+        const row = createCodeRow(val);
+        document.getElementById("codesContainer").appendChild(row);
+        updateCodeMaster();
+      }
+      document
+        .getElementById("addCodeBtn")
+        .addEventListener("click", () => addCode(""));
+      document
+        .getElementById("checkAllFields")
+        .addEventListener("change", (e) => {
+          const checked = e.target.checked;
+          sectionIds
+            .concat("checkAllCodes")
+            .forEach((id) => (document.getElementById(id).checked = checked));
+          document
+            .querySelectorAll(".code-check")
+            .forEach((c) => (c.checked = checked));
+        });
+      const CODE_REGEX =
+        /\b(?=.*\d)[A-Za-z0-9]{4,}(?:[ \-][A-Za-z0-9]{4,})*\b/g;
+      function parseRaw(raw) {
+        const lines = raw.split(/\r?\n/);
+        let service = "",
+          login = "",
+          note = "",
+          dateText = "",
+          codes = [];
+        lines.forEach((l) => {
+          let t = l.trim();
+          if (!t) return;
+          t = t.replace(/^\d+\.[ \t]*/, "").trim();
+          if (/\b(?:wygenerowano|generated)[:]?/i.test(t)) {
+            dateText = t.split(/[:]/).slice(1).join(":").trim();
+            return;
+          }
+          if (/^\S+@\S+\.\S+$/.test(t) || /^\(.+@.+\)$/.test(t)) {
+            login = t.replace(/^[()]+|[()]+$/g, "");
+            return;
+          }
+          if (/^[*\-]\s/.test(t)) {
+            note += t.replace(/^[*\-]\s*/, "") + " ";
+            return;
+          }
+          const found = t.match(CODE_REGEX);
+          if (found) {
+            found.forEach((tok) => codes.push(tok.trim()));
+            return;
+          }
+          if (!service && t.length < 50) {
+            service = t;
+          }
+        });
+        if (!dateText) dateText = new Date().toLocaleDateString();
+        return { service, login, note: note.trim(), date: dateText, codes };
+      }
+      document.getElementById("parseBtn").addEventListener("click", () => {
+        const raw = document.getElementById("rawInput").value;
+        if (!raw.trim()) return alert("Wklej surowy tekst");
+        const data = parseRaw(raw);
+        document.getElementById("previewRaw").value = raw;
+        ["service", "login", "note", "date"].forEach(
+          (f) => (document.getElementById(f + "Input").value = data[f])
+        );
+        document.getElementById("codesContainer").innerHTML = "";
+        data.codes.forEach((c) => addCode(c));
+        [
+          "checkService",
+          "checkLogin",
+          "checkAllCodes",
+          "checkNote",
+          "checkDate",
+          "checkAllFields",
+        ].forEach((id) => (document.getElementById(id).checked = false));
+        document.getElementById("errorMsg").textContent = "";
+        document.getElementById("rawSection").style.display = "none";
+        document.getElementById("editForm").style.display = "block";
+        bindSectionCheckboxes();
+        updateCodeMaster();
+      });
+      document.getElementById("cancelBtn").addEventListener("click", () => {
+        document.getElementById("editForm").style.display = "none";
+        document.getElementById("rawSection").style.display = "block";
+        document.getElementById("errorMsg").textContent = "";
+      });
+      document.getElementById("printBtn").addEventListener("click", () => {
+        const err = document.getElementById("errorMsg");
+        err.textContent = "";
+        if (!document.getElementById("checkAllFields").checked) {
+          err.textContent = "Potwierdź sprawdzenie wszystkich sekcji i kodów.";
+          return;
+        }
+        const srv = document.getElementById("serviceInput").value;
+        const log = document.getElementById("loginInput").value;
+        const notes = document.getElementById("noteInput").value;
+        const dat = document.getElementById("dateInput").value;
+        const items = Array.from(document.querySelectorAll(".code-item")).map(
+          (d) => d.querySelector("input[type=text]").value
+        );
+        const codesHtml = items
+          .map(
+            (v) => `<li><input type=\"checkbox\" disabled checked> ${v}</li>`
+          )
+          .join("");
+        const block = `<div class=\"block\"><h2>${srv}</h2><p><strong>${log}</strong></p><ul>${codesHtml}</ul>${
+          notes ? `<p><em>${notes}</em></p>` : ""
+        }<p class=\"date\">${dat}</p></div>`;
+        const win = window.open("", "_blank");
+        win.document.write(
+          `<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>Wydruk Kodów</title><style>@media print{body{margin:0;} .block{width:105mm;height:74mm;box-sizing:border-box;padding:8mm;page-break-after:always;} .block input[type=\"checkbox\"]{transform:scale(1.2);margin-right:6px;}} body{font-family:sans-serif;} .block{border:1px solid #444;margin:0;padding:8px;} ul{padding-left:20px;} .date{font-size:0.75rem;color:#666;margin-top:6px;}</style></head><body>${block}<script>window.print()<\/script></body></html>`
+        );
+      });
+    </script>
+  </body>
+</html>

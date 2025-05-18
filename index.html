@@ -161,11 +161,34 @@
           >
         </div>
         <span id="errorMsg" class="error"></span>
-        <button type="button" id="printBtn">Print</button>
+        <button type="button" id="addToQueueBtn">Add to Print Queue</button>
         <button type="button" id="downloadJsonBtn">Download JSON</button>
         <button type="button" id="cancelBtn">Cancel</button>
       </fieldset>
     </form>
+
+    <fieldset id="printQueueSection">
+      <legend>Print Queue</legend>
+      <div id="queueControls">
+        <label for="uploadJsonInput" class="button-like-label">
+          Upload JSONs to Queue
+        </label>
+        <input
+          type="file"
+          id="uploadJsonInput"
+          multiple
+          accept=".json"
+          style="display: none"
+        />
+        <button type="button" id="printAllQueuedBtn">Print All Queued</button>
+        <button type="button" id="clearQueueBtn">Clear Queue</button>
+      </div>
+      <ul id="printQueueList">
+        <!-- Queued items will be listed here -->
+      </ul>
+      <p id="queueStatus" style="display: none">Queue is empty.</p>
+    </fieldset>
+
     <script>
       const sectionIds = [
         "checkService",
@@ -173,6 +196,21 @@
         "checkNote",
         "checkDate",
       ];
+
+      // Style for the file input label to look like a button
+      const style = document.createElement("style");
+      style.innerHTML = `
+        .button-like-label {
+          padding: 8px 16px;
+          margin-right: 10px;
+          font-size: 1rem;
+          cursor: pointer;
+          background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; display: inline-block;
+        }
+        .button-like-label:hover { background-color: #e0e0e0; }
+      `;
+      document.head.appendChild(style);
+
       function updateCodeMaster() {
         const codeChecks = document.querySelectorAll(".code-check");
         const masterCodes = document.getElementById("checkAllCodes");
@@ -324,13 +362,16 @@
         document.getElementById("rawInputError").textContent = "";
         document.getElementById("rawInputError").style.display = "none";
       });
-      document.getElementById("printBtn").addEventListener("click", () => {
+
+      let printQueue = [];
+
+      function getCurrentFormData() {
         const err = document.getElementById("errorMsg");
         err.textContent = "";
         if (!document.getElementById("checkAllFields").checked) {
           err.textContent =
             "Please confirm that all sections and codes have been checked.";
-          return;
+          return null;
         }
         const srv = document.getElementById("serviceInput").value;
         const log = document.getElementById("loginInput").value;
@@ -339,17 +380,100 @@
         const items = Array.from(document.querySelectorAll(".code-item")).map(
           (d) => d.querySelector("input[type=text]").value
         );
-        const codesHtml = items
-          .map(
-            (v) => `<li><input type=\"checkbox\" disabled checked> ${v}</li>`
-          )
-          .join("");
-        const block = `<div class=\"block\"><h2>${srv}</h2><p><strong>${log}</strong></p><ul>${codesHtml}</ul>${
-          notes ? `<p><em>${notes}</em></p>` : ""
-        }<p class=\"date\">${dat}</p></div>`;
-        const win = window.open("", "_blank");
-        win.document.write(
-          `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Print Codes</title><style>
+        return {
+          id: Date.now() + Math.random(), // Simple unique ID
+          serviceName: srv,
+          login: log,
+          codes: items,
+          note: notes,
+          date: dat,
+          originalRawInput: document.getElementById("previewRaw").value,
+        };
+      }
+
+      function renderPrintQueue() {
+        const queueList = document.getElementById("printQueueList");
+        const queueStatus = document.getElementById("queueStatus");
+        queueList.innerHTML = "";
+        if (printQueue.length === 0) {
+          queueStatus.style.display = "block";
+          return;
+        }
+        queueStatus.style.display = "none";
+        printQueue.forEach((item) => {
+          const li = document.createElement("li");
+          li.textContent = `${item.serviceName || "Untitled"} (${
+            item.codes.length
+          } codes)`;
+          const removeBtn = document.createElement("button");
+          removeBtn.textContent = "Remove";
+          removeBtn.style.marginLeft = "10px";
+          removeBtn.onclick = () => {
+            printQueue = printQueue.filter((i) => i.id !== item.id);
+            renderPrintQueue();
+          };
+          li.appendChild(removeBtn);
+          queueList.appendChild(li);
+        });
+      }
+
+      document.getElementById("addToQueueBtn").addEventListener("click", () => {
+        const formData = getCurrentFormData();
+        if (formData) {
+          printQueue.push(formData);
+          renderPrintQueue();
+          alert(`"${formData.serviceName || "Item"}" added to print queue.`);
+          // Optionally, reset the form or switch view
+          document.getElementById("cancelBtn").click(); // Simulate cancel to reset view
+        }
+      });
+
+      document.getElementById("clearQueueBtn").addEventListener("click", () => {
+        if (confirm("Are you sure you want to clear the entire print queue?")) {
+          printQueue = [];
+          renderPrintQueue();
+        }
+      });
+
+      document
+        .getElementById("printAllQueuedBtn")
+        .addEventListener("click", () => {
+          if (printQueue.length === 0) {
+            alert("Print queue is empty.");
+            return;
+          }
+
+          let allBlocksHtml = "";
+          for (let i = 0; i < printQueue.length; i += 2) {
+            allBlocksHtml += `<div class="print-page-container">`;
+            const item1 = printQueue[i];
+            allBlocksHtml += generateBlockHtml(item1);
+            if (i + 1 < printQueue.length) {
+              const item2 = printQueue[i + 1];
+              allBlocksHtml += generateBlockHtml(item2);
+            }
+            allBlocksHtml += `</div>`;
+          }
+
+          function generateBlockHtml(itemData) {
+            if (!itemData) return "";
+            const codesHtml = itemData.codes
+              .map(
+                (v) => `<li><input type="checkbox" disabled checked> ${v}</li>`
+              )
+              .join("");
+            return `<div class="block"><h2>${
+              itemData.serviceName
+            }</h2><p><strong>${
+              itemData.login
+            }</strong></p><ul>${codesHtml}</ul>${
+              itemData.note ? `<p><em>${itemData.note}</em></p>` : ""
+            }<p class="date">${itemData.date}</p></div>`;
+          }
+
+          const win = window.open("", "_blank");
+          win.document.write(
+            `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Print Codes</title><style>
 body {
   font-family: sans-serif;
   margin: 0;
@@ -359,11 +483,20 @@ body {
   align-items: center;
   min-height: 100vh;
 }
+.print-page-container { /* For previewing pairs */
+  display: flex;
+  flex-direction: row;
+  justify-content: center; /* Center blocks in the container for preview */
+  align-items: flex-start;
+  margin-bottom: 20px; /* Space between pairs in preview */
+  width: calc(140mm * 2 + 20mm); /* Approximate width for two blocks + spacing */
+}
 .block {
   width: 140mm; /* Approx. A5 landscape width */
   height: 190mm; /* Approx. A5 landscape height */
   box-sizing: border-box;
   border: 1px solid #444;
+  margin: 5mm; /* Spacing for preview */
   padding: 10mm;
   font-size: 10pt; /* Base font size for the block */
   background-color: white; /* White card background for preview */
@@ -379,13 +512,23 @@ body {
 .block .date { font-size: 0.9em; color: #555; margin-top: 1em; text-align: right; }
 .block em { color: #444; font-style: italic; } /* For notes */
 
+/* Hide non-print elements if any were added to print window body */
+.no-print { display: none; }
+
 @media print {
   body { background-color: transparent; display: block; min-height: auto; margin:0; }
-  .block { margin: 0; page-break-after: always; box-shadow: none; } /* Align to top-left for printing */
+  .print-page-container {
+    page-break-after: always; /* Each container (pair of blocks) gets a new page */
+    margin: 0;
+    display: flex; /* Use flex for layout on print page */
+    justify-content: flex-start; /* Align blocks to the left */
+    width: auto; /* Take full printable width */
+  }
+  .block { margin: 0 5mm 5mm 0; box-shadow: none; /* Spacing for blocks on printed page */ }
 }
-</style></head><body>${block}<script>window.print()<\/script></body></html>`
-        );
-      });
+</style></head><body>${allBlocksHtml}<script>window.print()<\/script></body></html>`
+          );
+        });
       document
         .getElementById("downloadJsonBtn")
         .addEventListener("click", () => {
@@ -417,6 +560,46 @@ body {
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
         });
+
+      document
+        .getElementById("uploadJsonInput")
+        .addEventListener("change", function (event) {
+          const files = event.target.files;
+          if (!files.length) {
+            return;
+          }
+          Array.from(files).forEach((file) => {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              try {
+                const jsonData = JSON.parse(e.target.result);
+                // Basic validation for expected structure
+                if (
+                  jsonData &&
+                  typeof jsonData.serviceName !== "undefined" &&
+                  Array.isArray(jsonData.codes)
+                ) {
+                  jsonData.id = Date.now() + Math.random(); // Ensure unique ID
+                  printQueue.push(jsonData);
+                  renderPrintQueue();
+                } else {
+                  alert(
+                    `File "${file.name}" does not have the expected JSON structure.`
+                  );
+                }
+              } catch (error) {
+                alert(
+                  `Error parsing JSON from file "${file.name}": ${error.message}`
+                );
+              }
+            };
+            reader.readAsText(file);
+          });
+          // Reset file input to allow uploading the same file again if needed
+          event.target.value = null;
+        });
+
+      renderPrintQueue(); // Initial render of the queue (will show empty message)
     </script>
   </body>
 </html>

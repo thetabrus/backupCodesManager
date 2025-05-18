@@ -243,8 +243,11 @@
             .querySelectorAll(".code-check")
             .forEach((c) => (c.checked = checked));
         });
+      // Regex to find codes: alphanumeric with at least one digit, supporting Unicode letters (diacritics).
+      // Handles precomposed and decomposed Unicode characters (e.g., letter + combining marks).
+      // Using lookarounds for boundaries due to potential \b issues with some Unicode sequences.
       const CODE_REGEX =
-        /\b(?=.*\d)[A-Za-z0-9]{4,}(?:[ \-][A-Za-z0-9]{4,})*\b/g;
+        /(?:(?<=^)|(?<=[^\p{L}\p{N}_]))(?=.*\d)(?:[\p{L}0-9]\p{M}*){4,}(?:[ -](?:[\p{L}0-9]\p{M}*){4,})*(?:(?=$)|(?=[^\p{L}\p{N}_]))/gu;
       function parseRaw(raw) {
         const lines = raw.split(/\r?\n/);
         let service = "",

@@ -105,6 +105,11 @@
     <div id="rawSection">
       <p>Paste the raw text with the list of backup codes:</p>
       <textarea id="rawInput" placeholder="Paste raw text..."></textarea>
+      <span
+        id="rawInputError"
+        class="error"
+        style="display: none; margin-bottom: 5px"
+      ></span>
       <button id="parseBtn">Parse and Edit</button>
     </div>
     <form id="editForm" style="display: none">
@@ -277,7 +282,16 @@
       }
       document.getElementById("parseBtn").addEventListener("click", () => {
         const raw = document.getElementById("rawInput").value;
-        if (!raw.trim()) return alert("Please paste the raw text");
+        const rawInputError = document.getElementById("rawInputError");
+
+        if (!raw.trim()) {
+          rawInputError.textContent = "Please paste the raw text.";
+          rawInputError.style.display = "block";
+          return;
+        }
+        rawInputError.textContent = "";
+        rawInputError.style.display = "none";
+
         const data = parseRaw(raw);
         document.getElementById("previewRaw").value = raw;
         ["service", "login", "note", "date"].forEach(
@@ -303,6 +317,8 @@
         document.getElementById("editForm").style.display = "none";
         document.getElementById("rawSection").style.display = "block";
         document.getElementById("errorMsg").textContent = "";
+        document.getElementById("rawInputError").textContent = "";
+        document.getElementById("rawInputError").style.display = "none";
       });
       document.getElementById("printBtn").addEventListener("click", () => {
         const err = document.getElementById("errorMsg");

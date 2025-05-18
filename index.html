@@ -162,6 +162,7 @@
         </div>
         <span id="errorMsg" class="error"></span>
         <button type="button" id="printBtn">Print</button>
+        <button type="button" id="downloadJsonBtn">Download JSON</button>
         <button type="button" id="cancelBtn">Cancel</button>
       </fieldset>
     </form>
@@ -385,6 +386,37 @@ body {
 </style></head><body>${block}<script>window.print()<\/script></body></html>`
         );
       });
+      document
+        .getElementById("downloadJsonBtn")
+        .addEventListener("click", () => {
+          const srv = document.getElementById("serviceInput").value.trim();
+          const log = document.getElementById("loginInput").value.trim();
+          const notes = document.getElementById("noteInput").value.trim();
+          const dat = document.getElementById("dateInput").value.trim();
+          const items = Array.from(
+            document.querySelectorAll(".code-item input[type=text]")
+          ).map((input) => input.value.trim());
+
+          const jsonData = {
+            serviceName: srv,
+            login: log,
+            codes: items,
+            note: notes,
+            date: dat,
+            originalRawInput: document.getElementById("previewRaw").value,
+          };
+
+          const jsonString = JSON.stringify(jsonData, null, 2); // null, 2 for pretty printing
+          const blob = new Blob([jsonString], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `${srv || "backup-codes"}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        });
     </script>
   </body>
 </html>

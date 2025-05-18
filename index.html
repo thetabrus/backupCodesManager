@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -103,13 +103,13 @@
   <body>
     <h1>Backup 2FA Codes Manager</h1>
     <div id="rawSection">
-      <p>Wklej surowy tekst z listą kodów zapasowych:</p>
-      <textarea id="rawInput" placeholder="Wklej surowy tekst..."></textarea>
-      <button id="parseBtn">Parsuj i edytuj</button>
+      <p>Paste the raw text with the list of backup codes:</p>
+      <textarea id="rawInput" placeholder="Paste raw text..."></textarea>
+      <button id="parseBtn">Parse and Edit</button>
     </div>
     <form id="editForm" style="display: none">
       <fieldset>
-        <legend>Oryginalny tekst</legend>
+        <legend>Original Text</legend>
         <textarea
           id="previewRaw"
           readonly
@@ -117,45 +117,47 @@
         ></textarea>
       </fieldset>
       <fieldset>
-        <legend>Dane do wydruku</legend>
+        <legend>Print Data</legend>
         <div class="section-header">
           <input type="checkbox" id="checkService" /><label for="serviceInput"
-            >Nazwa usługi</label
+            >Service Name</label
           >
         </div>
         <input type="text" id="serviceInput" />
         <div class="section-header">
           <input type="checkbox" id="checkLogin" /><label for="loginInput"
-            >Mail/Login</label
+            >Email/Login</label
           >
         </div>
         <input type="text" id="loginInput" />
         <div class="section-header">
-          <input type="checkbox" id="checkAllCodes" /><label>Lista kodów</label>
+          <input type="checkbox" id="checkAllCodes" /><label
+            >List of Codes</label
+          >
         </div>
         <div class="codes-container" id="codesContainer"></div>
-        <button type="button" id="addCodeBtn">+ Dodaj kod</button>
+        <button type="button" id="addCodeBtn">+ Add Code</button>
         <div class="section-header">
           <input type="checkbox" id="checkNote" /><label for="noteInput"
-            >Notatka</label
+            >Note</label
           >
         </div>
         <input type="text" id="noteInput" />
         <div class="section-header">
           <input type="checkbox" id="checkDate" /><label for="dateInput"
-            >Data przetworzenia</label
+            >Processing Date</label
           >
         </div>
         <input type="text" id="dateInput" />
         <div class="master-check">
           <input type="checkbox" id="checkAllFields" /><label
             for="checkAllFields"
-            >Wszystkie sekcje i kody sprawdzone</label
+            >All sections and codes checked</label
           >
         </div>
         <span id="errorMsg" class="error"></span>
-        <button type="button" id="printBtn">Drukuj</button>
-        <button type="button" id="cancelBtn">Anuluj</button>
+        <button type="button" id="printBtn">Print</button>
+        <button type="button" id="cancelBtn">Cancel</button>
       </fieldset>
     </form>
     <script>
@@ -275,7 +277,7 @@
       }
       document.getElementById("parseBtn").addEventListener("click", () => {
         const raw = document.getElementById("rawInput").value;
-        if (!raw.trim()) return alert("Wklej surowy tekst");
+        if (!raw.trim()) return alert("Please paste the raw text");
         const data = parseRaw(raw);
         document.getElementById("previewRaw").value = raw;
         ["service", "login", "note", "date"].forEach(
@@ -306,7 +308,8 @@
         const err = document.getElementById("errorMsg");
         err.textContent = "";
         if (!document.getElementById("checkAllFields").checked) {
-          err.textContent = "Potwierdź sprawdzenie wszystkich sekcji i kodów.";
+          err.textContent =
+            "Please confirm that all sections and codes have been checked.";
           return;
         }
         const srv = document.getElementById("serviceInput").value;
@@ -326,7 +329,7 @@
         }<p class=\"date\">${dat}</p></div>`;
         const win = window.open("", "_blank");
         win.document.write(
-          `<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>Wydruk Kodów</title><style>@media print{body{margin:0;} .block{width:105mm;height:74mm;box-sizing:border-box;padding:8mm;page-break-after:always;} .block input[type=\"checkbox\"]{transform:scale(1.2);margin-right:6px;}} body{font-family:sans-serif;} .block{border:1px solid #444;margin:0;padding:8px;} ul{padding-left:20px;} .date{font-size:0.75rem;color:#666;margin-top:6px;}</style></head><body>${block}<script>window.print()<\/script></body></html>`
+          `<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>Print Codes</title><style>@media print{body{margin:0;} .block{width:105mm;height:74mm;box-sizing:border-box;padding:8mm;page-break-after:always;} .block input[type=\"checkbox\"]{transform:scale(1.2);margin-right:6px;}} body{font-family:sans-serif;} .block{border:1px solid #444;margin:0;padding:8px;} ul{padding-left:20px;} .date{font-size:0.75rem;color:#666;margin-top:6px;}</style></head><body>${block}<script>window.print()<\/script></body></html>`
         );
       });
     </script>

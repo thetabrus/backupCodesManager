@@ -4,13 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- html2canvas is often used by jsPDF's html method, ensure it's available if complex rendering is needed -->
     <link
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
     />
     <link rel="icon" type="image/x-icon" href="backupcodesmanager.ico" />
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <title>Backup Codes Manager</title>
     <style>
@@ -35,15 +33,15 @@
         --m3-error-container: #ffdad6;
         --m3-on-error-container: #410002;
 
-        --m3-background: #f7fcff; /* Page background */
-        --m3-on-background: #171d1f; /* Main text color */
+        --m3-background: #f7fcff;
+        --m3-on-background: #171d1f;
 
-        --m3-surface: #ffffff; /* Card backgrounds, inputs */
+        --m3-surface: #ffffff;
         --m3-on-surface: #171d1f;
-        --m3-surface-variant: #dbe4e8; /* Slightly different surface, e.g. disabled, subtle backgrounds */
-        --m3-on-surface-variant: #40484c; /* Text on variant surface */
+        --m3-surface-variant: #dbe4e8;
+        --m3-on-surface-variant: #40484c;
 
-        --m3-outline: #70787c; /* Borders */
+        --m3-outline: #70787c;
         --m3-shadow-color: rgba(0, 0, 0, 0.1);
         --m3-shadow-elevation-1: 0 1px 2px 0 var(--m3-shadow-color),
           0 1px 3px 0 var(--m3-shadow-color);
@@ -93,7 +91,6 @@
         line-height: 1.6;
       }
 
-      /* Apply max-width to main content sections for better readability on wide screens */
       body > h1,
       #rawSection,
       #editForm,
@@ -106,9 +103,8 @@
       }
 
       #printQueueSection legend {
-        float: left; /* Let it shrink to content */
-        width: auto; /* Override general legend's width: 100% */
-        /* padding-left and padding-right will be inherited from general legend (0) */
+        float: left;
+        width: auto;
       }
 
       #originalTextSection legend,
@@ -118,7 +114,7 @@
       }
 
       h1 {
-        font-size: 2.25rem; /* 36px */
+        font-size: 2.25rem;
         font-weight: 700;
         color: var(--m3-primary);
         margin-bottom: var(--m3-spacing-xl);
@@ -151,21 +147,18 @@
         box-shadow: 0 0 0 2px var(--m3-primary-container);
       }
 
-      /* Card styling for sections */
       fieldset,
       #rawSection {
-        /* Apply card style to #rawSection as well */
-        padding: var(--m3-spacing-l); /* Uniform padding inside the card */
+        padding: var(--m3-spacing-l);
         padding-right: var(--m3-spacing-l);
         padding-bottom: var(--m3-spacing-l);
         background-color: var(--m3-surface);
-        border: none; /* Remove default fieldset border */
+        border: none;
         border-radius: var(--m3-border-radius-l);
-        margin: 0 auto var(--m3-spacing-l) auto; /* Centered with bottom margin */
+        margin: 0 auto var(--m3-spacing-l) auto;
         box-shadow: var(--m3-shadow-elevation-1);
       }
       #rawSection > p {
-        /* Style for the instruction text in rawSection */
         margin-top: 0;
         margin-bottom: var(--m3-spacing-m);
         font-size: 1.1rem;
@@ -173,27 +166,23 @@
       }
 
       legend {
-        font-size: 1.5rem; /* 24px */
+        font-size: 1.5rem;
         font-weight: 600;
         color: var(--m3-on-surface-variant);
-
-        /* Indent legend content to align with fieldset's padding */
-        padding-left: 0; /* Reverted for float approach */
-        padding-right: 0; /* Reverted for float approach */
-        padding-bottom: var(--m3-spacing-xs); /* Reduced space for border */
-
-        margin-left: 0; /* Aligns to the start of the fieldset's content box */
-        margin-right: 0; /* Aligns to the end of the fieldset's content box */
-        margin-bottom: var(--m3-spacing-m); /* Reduced bottom margin */
+        padding-left: 0;
+        padding-right: 0;
+        padding-bottom: var(--m3-spacing-xs);
+        margin-left: 0;
+        margin-right: 0;
+        margin-bottom: var(--m3-spacing-m);
         border-bottom: 1px solid var(--m3-surface-variant);
-        /* width: 100%; Reverted: Floated legends use width: auto */
-        display: block; /* Ensure it behaves as a block for width */
-        box-sizing: border-box; /* Be explicit to ensure padding is handled as expected */
+        display: block;
+        box-sizing: border-box;
       }
       .section-header {
         display: flex;
         align-items: center;
-        font-weight: 500; /* Medium weight */
+        font-weight: 500;
         font-size: 1.1rem;
         color: var(--m3-on-surface-variant);
         margin-top: var(--m3-spacing-l);
@@ -254,8 +243,8 @@
 
       .code-item input[type="text"] {
         flex: 1;
-        margin-bottom: 0; /* Handled by gap in .code-item */
-        background-color: var(--m3-surface); /* Input stands out on item bg */
+        margin-bottom: 0;
+        background-color: var(--m3-surface);
       }
 
       .master-check {
@@ -269,13 +258,11 @@
       .button-like-label {
         padding: var(--m3-spacing-s) var(--m3-spacing-m);
         font-size: 1rem;
-        border-radius: var(
-          --m3-border-radius-xl
-        ); /* Pill shape or large radius */
+        border-radius: var(--m3-border-radius-xl);
         cursor: pointer;
         border: none;
         font-weight: 500;
-        line-height: normal; /* Ensure consistent line height */
+        line-height: normal;
         transition: background-color 0.2s ease, box-shadow 0.2s ease,
           filter 0.2s ease;
         text-align: center;
@@ -283,17 +270,14 @@
         align-items: center;
         justify-content: center;
         gap: var(--m3-spacing-s);
-        margin-right: var(
-          --m3-spacing-s
-        ); /* Default margin for buttons in a row */
-        margin-bottom: var(--m3-spacing-s); /* For wrapping */
+        margin-right: var(--m3-spacing-s);
+        margin-bottom: var(--m3-spacing-s);
       }
       button:last-child,
       .button-like-label:last-child {
         margin-right: 0;
       }
 
-      /* Primary Button Style */
       button#parseBtn,
       button#addToQueueBtn,
       button#printAllQueuedBtn {
@@ -307,7 +291,6 @@
         box-shadow: var(--m3-shadow-elevation-1);
       }
 
-      /* Secondary/Outlined Button Style */
       button#downloadJsonBtn,
       button#clearQueueBtn,
       button#cancelBtn {
@@ -323,65 +306,56 @@
         border-color: var(--m3-secondary);
       }
 
-      /* Tertiary/Special Action Button Style */
       button#addCodeBtn {
         background-color: var(--m3-tertiary-container);
         color: var(--m3-on-tertiary-container);
         padding: var(--m3-spacing-s) var(--m3-spacing-m);
-        margin: var(--m3-spacing-m) 0; /* Give it some vertical space */
+        margin: var(--m3-spacing-m) 0;
       }
       button#addCodeBtn:hover {
         filter: brightness(0.9);
       }
 
       .code-item button {
-        /* Delete code button '✖' */
         padding: var(--m3-spacing-xs) var(--m3-spacing-s);
         min-width: auto;
         border-radius: var(--m3-border-radius-s);
         background-color: var(--m3-error-container);
         color: var(--m3-on-error-container);
         border: none;
-        margin-right: 0; /* No extra margin */
+        margin-right: 0;
       }
       .code-item button:hover {
         filter: brightness(0.9);
       }
 
       .button-like-label {
-        /* For Upload JSON */
         background-color: var(--m3-surface-variant);
-        color: var(
-          --m3-on-surface-variant
-        ); /* Match secondary button text color */
-        /* Ensure padding matches other buttons, already handled by shared rule */
+        color: var(--m3-on-surface-variant);
         border: 1px solid var(--m3-outline);
-        /* line-height and vertical-align also handled by shared rule or flex alignment */
       }
       .button-like-label:hover {
-        /* Matches hover of other secondary/outlined buttons */
         background-color: var(--m3-secondary-container);
-        color: var(
-          --m3-on-secondary-container
-        ); /* Match secondary button hover text color */
+        color: var(--m3-on-secondary-container);
         border-color: var(--m3-secondary);
       }
-      /* Explicitly hide error message by default */
       .error {
-        color: var(--m3-on-error-container);
-        background-color: var(--m3-error-container);
-        padding: var(--m3-spacing-s) var(--m3-spacing-m);
-        border-radius: var(--m3-border-radius-m);
-        margin-bottom: var(--m3-spacing-m);
-        display: block; /* Keep this */
-        font-weight: 500; /* Medium weight */
-        display: none; /* Hide by default */
+        color: var(--m3-on-error-container); /* Text color for error messages */
+        background-color: var(
+          --m3-error-container
+        ); /* Background for error messages */
+        padding: var(--m3-spacing-s) var(--m3-spacing-m); /* Padding within error messages */
+        border-radius: var(
+          --m3-border-radius-m
+        ); /* Rounded corners for error messages */
+        margin-bottom: var(--m3-spacing-m); /* Space below error messages */
+        font-weight: 500; /* Medium weight for error text */
+        display: none;
       }
       #rawInputError {
-        margin-top: var(--m3-spacing-s); /* Space below textarea */
+        margin-top: var(--m3-spacing-s);
       }
 
-      /* FAB Menu */
       #appMenuContainer {
         position: fixed;
         bottom: var(--m3-spacing-l);
@@ -389,7 +363,6 @@
         z-index: 1000;
       }
       #mainMenuBtn {
-        /* FAB */
         cursor: pointer;
         padding: 0;
         display: flex;
@@ -400,13 +373,11 @@
         background: var(--m3-secondary-container);
         color: var(--m3-on-secondary-container);
         border: none;
-        border-radius: var(
-          --m3-border-radius-l
-        ); /* M3 FABs often more squarish-rounded */
+        border-radius: var(--m3-border-radius-l);
         box-shadow: var(--m3-shadow-elevation-3);
         transition: transform 0.2s ease-out, box-shadow 0.2s ease-out,
           background-color 0.2s ease;
-        margin: 0; /* Reset margin from general button style */
+        margin: 0;
       }
       #mainMenuBtn:hover {
         transform: scale(1.05);
@@ -429,8 +400,9 @@
         border-radius: var(--m3-border-radius-m);
         box-shadow: var(--m3-shadow-elevation-2);
         padding: var(--m3-spacing-s) 0;
-        min-width: 220px; /* Wider menu */
+        min-width: 220px;
         z-index: 1001;
+        display: none;
       }
 
       .app-menu-item {
@@ -440,7 +412,7 @@
         align-items: center;
         font-size: 1rem;
         color: var(--m3-on-surface);
-        gap: var(--m3-spacing-m); /* Increased gap */
+        gap: var(--m3-spacing-m);
         transition: background-color 0.15s ease;
       }
       .app-menu-item:hover {
@@ -450,8 +422,11 @@
         font-size: 22px;
         color: var(--m3-on-surface-variant);
       }
+      .app-menu-item .material-icons {
+        font-size: 22px;
+        color: var(--m3-on-surface-variant);
+      }
 
-      /* Print Queue Section */
       #queueControls {
         display: flex;
         flex-wrap: wrap;
@@ -459,12 +434,9 @@
         margin-bottom: var(--m3-spacing-l);
         align-items: center;
       }
-      /* Clear the float of the legend so controls sit below it */
       #printQueueSection legend + #queueControls {
         clear: both;
       }
-
-      /* Clear the float for Original Text legend */
       #originalTextSection legend + #previewRaw {
         clear: both;
       }
@@ -493,7 +465,6 @@
         font-size: 1rem;
       }
       #printQueueList li button {
-        /* Remove button in list item */
         margin-left: var(--m3-spacing-m);
         background-color: var(--m3-error-container);
         color: var(--m3-on-error-container);
@@ -505,19 +476,20 @@
         filter: brightness(0.9);
       }
       #queueStatus {
-        color: var(--m3-on-surface-variant); /* Text color */
-        /* font-style: italic; Removed */
+        color: var(--m3-on-surface-variant);
         text-align: center;
         padding: var(--m3-spacing-m);
         background-color: var(--m3-surface-variant);
         border-radius: var(--m3-border-radius-m);
       }
+      #queueStatus {
+        display: none;
+      }
 
-      /* Print styles - largely untouched but ensure body margin is reset for print */
       @media print {
         body {
           margin: 0;
-          background-color: transparent; /* Ensure no page background color for print */
+          background-color: transparent;
         }
         .block {
           width: 105mm;
@@ -536,69 +508,20 @@
   <body>
     <h1>Backup 2FA Codes Manager</h1>
 
-    <!-- New Menu Button and Pop-up Menu -->
-    <div
-      id="appMenuContainer"
-      style="position: fixed; bottom: 20px; right: 20px; z-index: 1000"
-    >
-      <!-- Menu items, initially hidden, positioned above the button -->
-      <div
-        id="appMenuItems"
-        style="
-          display: none;
-          position: absolute;
-          bottom: 100%; /* Position above the button */
-          right: 0; /* Align with the right of the button */
-          margin-bottom: 8px; /* Space between menu and button */
-          background: white;
-          border: 1px solid #ccc;
-          border-radius: 5px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-          padding: 5px 0;
-          min-width: 160px; /* Ensure menu has some width */
-        "
-      >
+    <div id="appMenuContainer">
+      <div id="appMenuItems">
         <div class="app-menu-item" id="menuItemTestParser">
-          <span
-            class="material-icons"
-            style="font-size: 20px; vertical-align: middle; margin-right: 8px"
-            >science</span
-          >
+          <span class="material-icons">science</span>
           Test Parser
         </div>
         <div class="app-menu-item">
-          <input
-            type="checkbox"
-            id="menuPdfModeCheckbox"
-            style="margin-right: 8px; vertical-align: middle"
-          />
-          <label
-            for="menuPdfModeCheckbox"
-            style="vertical-align: middle; cursor: pointer"
-            >PDF Mode</label
-          >
+          <input type="checkbox" id="menuPdfModeCheckbox" />
+          <label for="menuPdfModeCheckbox">PDF Mode</label>
         </div>
       </div>
 
-      <!-- The actual menu button -->
-      <button
-        id="mainMenuBtn"
-        title="Menu"
-        style="
-          cursor: pointer;
-          padding: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 38px; /* Same size as old test button */
-          height: 38px; /* Same size as old test button */
-          background: white;
-          border: 1px solid #ccc;
-          border-radius: 5px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        "
-      >
-        <span class="material-icons" style="font-size: 24px">menu</span>
+      <button id="mainMenuBtn" title="Menu">
+        <span class="material-icons">menu</span>
       </button>
     </div>
 
@@ -608,14 +531,10 @@
       <span id="rawInputError" class="error"></span>
       <button id="parseBtn">Parse and Edit</button>
     </div>
-    <form id="editForm" style="display: none">
+    <form id="editForm">
       <fieldset id="originalTextSection">
         <legend>Original Text</legend>
-        <textarea
-          id="previewRaw"
-          readonly
-          style="width: 100%; height: 100px"
-        ></textarea>
+        <textarea id="previewRaw" readonly></textarea>
       </fieldset>
       <fieldset id="printDataSection">
         <legend>Print Data</legend>
@@ -657,7 +576,6 @@
           >
         </div>
         <span id="errorMsg" class="error"></span>
-        <!-- Removed inline style -->
         <button type="button" id="addToQueueBtn">Add to Print Queue</button>
         <button type="button" id="downloadJsonBtn">Download JSON</button>
         <button type="button" id="cancelBtn">Cancel</button>
@@ -671,22 +589,22 @@
         <label for="uploadJsonInput" class="button-like-label">
           Upload JSONs to Queue
         </label>
-        <input
-          type="file"
-          id="uploadJsonInput"
-          multiple
-          accept=".json"
-          style="display: none"
-        />
+        <input type="file" id="uploadJsonInput" multiple accept=".json" />
         <button type="button" id="clearQueueBtn">Clear Queue</button>
       </div>
-      <ul id="printQueueList">
-        <!-- Queued items will be listed here -->
-      </ul>
-      <p id="queueStatus" style="display: none">Queue is empty.</p>
+      <ul id="printQueueList"></ul>
+      <p id="queueStatus">Queue is empty.</p>
     </fieldset>
 
     <script>
+      const styleSheet = document.createElement("style");
+      styleSheet.textContent = `
+        #editForm { display: none; }
+        #previewRaw { width: 100%; height: 100px; }
+        #uploadJsonInput { display: none; }
+      `;
+      document.head.appendChild(styleSheet);
+
       const FONT_PATH_GLOBAL = "./NotoSans-Regular.ttf"; // Used by PDF and potentially non-PDF print
       const FONT_PATH_GLOBAL_BOLD = "./NotoSans-Bold.ttf"; // For bolder service names
 
@@ -697,7 +615,7 @@
         "checkDate",
       ];
 
-      let pdfModeActive = true; // Default to true
+      let pdfModeActive = true;
 
       function updateCodeMaster() {
         const codeChecks = document.querySelectorAll(".code-check");
@@ -770,8 +688,6 @@
             .querySelectorAll(".code-check")
             .forEach((c) => (c.checked = checked));
         });
-      // Regex to find potential code candidates: alphanumeric sequences, 4+ chars,
-      // possibly with internal hyphens or spaces. Does not require a digit at this stage.
       const CODE_CANDIDATE_REGEX =
         /(?:(?<=^)|(?<=[^\p{L}\p{N}_]))(?:[\p{L}0-9]\p{M}*){4,}(?:[ -](?:[\p{L}0-9]\p{M}*){4,})*(?:(?=$)|(?=[^\p{L}\p{N}_]))/gu;
       const SPECIAL_CODE_WORDS = /^(?:UŻYTY|USED|JUŻ UŻYTY)$/i; // Case-insensitive, whole word
@@ -789,8 +705,6 @@
           let originalTrimmedLine = l.trim();
           if (!originalTrimmedLine) return;
 
-          // 1. Date Check
-          // Content for date check should be after stripping potential list markers.
           let contentForDateCheck = originalTrimmedLine;
           if (/^[*\-]\s/.test(originalTrimmedLine)) {
             contentForDateCheck = originalTrimmedLine
@@ -807,14 +721,13 @@
             return;
           }
 
-          // 2. Login check (can also be prefixed, strip markers before checking)
           let loginCandidateLine = originalTrimmedLine;
           loginCandidateLine = loginCandidateLine
             .replace(/^\d+\.[ \t]*/, "")
-            .trim(); // Strip "1. "
+            .trim();
           loginCandidateLine = loginCandidateLine
             .replace(/^[*\-]\s*/, "")
-            .trim(); // Strip "* " or "- "
+            .trim();
           if (
             /^\S+@\S+\.\S+$/.test(loginCandidateLine) ||
             /^\(.+@.+\)$/.test(loginCandidateLine)
@@ -823,7 +736,6 @@
             return;
           }
 
-          // For code, note, service:
           let contentForProcessing = originalTrimmedLine;
           const startsWithBullet = /^[*\-]\s/.test(originalTrimmedLine);
           const startsWithNumberList = /^\d+\.[ \t]/.test(originalTrimmedLine);
@@ -838,7 +750,6 @@
               .trim();
           }
 
-          // 3. Code Detection
           const potentialCodeTokens =
             contentForProcessing.match(CODE_CANDIDATE_REGEX);
           let actualCodesInLine = [];
@@ -851,7 +762,6 @@
 
           if (actualCodesInLine.length > 0) {
             if (startsWithNumberList) {
-              // Numbered lists are strong indicators of codes
               actualCodesInLine.forEach((tok) => {
                 let codeToAdd = tok.trim();
                 if (SPECIAL_CODE_WORDS.test(codeToAdd)) codeToAdd = "UŻYTY";
@@ -860,10 +770,8 @@
               return;
             }
 
-            // For bulleted or non-prefixed lines, check if content is mostly codes
             let tempRemainder = contentForProcessing;
             actualCodesInLine.forEach((code) => {
-              // Use a regex to replace the specific code as a whole word/unit, case-insensitively for removal
               const codeRegex = new RegExp(
                 `\\b${code.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
                 "gi"
@@ -871,11 +779,10 @@
               tempRemainder = tempRemainder.replace(codeRegex, "");
             });
             tempRemainder = tempRemainder.replace(/\b(?:JUŻ|ALREADY)\b/gi, ""); // Remove "JUŻ" etc.
-            tempRemainder = tempRemainder.replace(/\d+\.\s*/g, ""); // Remove "6. " type markers within content
+            tempRemainder = tempRemainder.replace(/\d+\.\s*/g, "");
             tempRemainder = tempRemainder.trim().replace(/[.,;:!?]$/, "");
 
             if (tempRemainder.length === 0) {
-              // If what's left is empty, it was purely codes
               actualCodesInLine.forEach((tok) => {
                 let codeToAdd = tok.trim();
                 if (SPECIAL_CODE_WORDS.test(codeToAdd)) codeToAdd = "UŻYTY";
@@ -883,7 +790,6 @@
               });
               return;
             }
-            // If bulleted and not purely codes, but still short (e.g. "* UŻYTY", "* code123")
             if (
               startsWithBullet &&
               contentForProcessing.split(/\s+/).filter(Boolean).length <= 3 &&
@@ -898,14 +804,11 @@
             }
           }
 
-          // 4. Note Check (applies if it's a bulleted line not caught as codes or date)
           if (/^[*\-]\s/.test(originalTrimmedLine)) {
-            // contentForProcessing is already the bullet's content
             note += contentForProcessing + " ";
             return;
           }
 
-          // 5. Service Name Fallback
           if (!startsWithBullet && !startsWithNumberList) {
             if (
               !service &&
@@ -923,7 +826,6 @@
         });
 
         if (!dateFoundInInput && !dateText) {
-          // If no date was found from input and not set by other means
           dateText = new Date().toLocaleDateString();
         }
         return {
@@ -983,11 +885,11 @@
       function getCurrentFormData() {
         const err = document.getElementById("errorMsg");
         err.textContent = "";
-        err.style.display = "none"; // Hide by default before check
+        err.style.display = "none";
         if (!document.getElementById("checkAllFields").checked) {
           err.textContent =
             "Please confirm that all sections and codes have been checked.";
-          err.style.display = "block"; // Show error
+          err.style.display = "block";
           return null;
         }
         const srv = document.getElementById("serviceInput").value;
@@ -998,7 +900,7 @@
           (d) => d.querySelector("input[type=text]").value
         );
         return {
-          id: Date.now() + Math.random(), // Simple unique ID
+          id: Date.now() + Math.random(),
           serviceName: srv,
           login: log,
           codes: items,
@@ -1038,22 +940,21 @@
         const formData = getCurrentFormData();
         if (formData) {
           printQueue.push(formData);
-          document.getElementById("errorMsg").style.display = "none"; // Hide error on success
+          document.getElementById("errorMsg").style.display = "none";
           renderPrintQueue();
           alert(`"${formData.serviceName || "Item"}" added to print queue.`);
-          // Optionally, reset the form or switch view
-          document.getElementById("cancelBtn").click(); // Simulate cancel to reset view
+          document.getElementById("cancelBtn").click();
         }
       });
 
       document.getElementById("clearQueueBtn").addEventListener("click", () => {
+        // prettier-ignore
         if (confirm("Are you sure you want to clear the entire print queue?")) {
           printQueue = [];
           renderPrintQueue();
         }
       });
 
-      // Hoist generateBlockHtml to be accessible by PDF generation logic
       function generateBlockHtml(
         itemData,
         isFirstInPair = false,
@@ -1061,15 +962,11 @@
       ) {
         if (!itemData) return "";
         const codesHtml = itemData.codes
-          .map(
-            (v) => `<li><input type="checkbox" disabled /> ${v}</li>` // Removed 'checked'
-          ) // Self-closed for tidiness
+          .map((v) => `<li><input type="checkbox" disabled /> ${v}</li>`)
           .join("");
-        // Add margin-right to the first block only if it's part of a pair on the page
         const blockStyle =
           isFirstInPair && isPairOnPage ? 'style="margin-right: 5mm;"' : "";
 
-        // New layout order for non-PDF (about:blank)
         let html = `<div class="block" ${blockStyle}>`;
         if (itemData.serviceName) html += `<h2>${itemData.serviceName}</h2>`;
         if (itemData.login) html += `<p><strong>${itemData.login}</strong></p>`;
@@ -1077,7 +974,7 @@
         if (itemData.codes && itemData.codes.length > 0)
           html += `<ul>${codesHtml}</ul>`;
         if (itemData.note) html += `<p><em>${itemData.note}</em></p>`; // Note is last
-        html += `</div>`;
+        html += `</div>`; // prettier-ignore
         return html;
       }
 
@@ -1107,22 +1004,16 @@
           }
 
           const win = window.open("", "_blank");
-          // Script to be injected into the new window.
-          // It waits for fonts to be ready before printing.
           const injectedScript = `
             async function printWhenReady() {
               try {
-                // Wait for all fonts specified in @font-face rules to be loaded and ready.
                 await document.fonts.ready;
-                // console.log('Fonts are ready, initiating print.');
                 window.print();
               } catch (error) {
                 console.error('Error waiting for fonts, printing anyway:', error);
-                window.print(); // Fallback to print immediately if font check fails.
+                window.print();
               }
             }
-
-            // Call printWhenReady after the DOM is fully loaded.
             window.onload = printWhenReady;
           `;
           win.document.write(
@@ -1141,104 +1032,95 @@
 }
 body {
   margin: 0;
-  background-color: #f0f0f0; /* Preview background */
-  display: flex; /* Center content in preview */
+  background-color: #f0f0f0;
+  display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
 }
-body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* Apply Noto font to non-PDF print view */
-.print-page-container { /* Container for one or two blocks in preview */
+body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; }
+.print-page-container {
   display: flex;
   flex-direction: row;
-  justify-content: center; /* Centers the block(s) within this container */
+  justify-content: center;
   align-items: flex-start;
-  margin-bottom: 20px; /* Space between pairs in preview */
-  /* Width will be determined by its content (one or two blocks with their margins) */
+  margin-bottom: 20px;
 }
 .block {
-  width: 138mm; /* Reduced width to prevent overflow, matches PDF block width */
-  height: 190mm; /* Approx. A5 landscape height, matches PDF block height */
+  width: 138mm;
+  height: 190mm;
   box-sizing: border-box;
   border: 1px solid #444;
-  margin: 5mm; /* Spacing for preview */
+  margin: 5mm;
   padding: 10mm;
-  font-size: 10pt; /* Base font size for the block */
-  background-color: white; /* White card background for preview */
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Subtle shadow for preview */
-  overflow: hidden; /* Prevent content spill in preview */
-  font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; /* Ensure blocks also use Noto */
+  font-size: 10pt;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  overflow: hidden;
+  font-family: 'NotoSansUnicode', sans-serif; font-weight: normal;
 }
 .block h2 {
-  font-family: 'NotoSansUnicode', sans-serif; /* Explicitly set for h2 */
-  font-weight: bold; /* Use the bold variant of NotoSansUnicode */
+  font-family: 'NotoSansUnicode', sans-serif;
+  font-weight: bold;
   font-size: 1.8em; margin-top: 0; margin-bottom: 0.6em; color: #333;
 }
-.block p { font-size: 1em; margin: 0.6em 0; line-height: 1.4; } /* line-height is 1.4 */
-.block p strong { color: #000; font-weight: bold; } /* For login */
+.block p { font-size: 1em; margin: 0.6em 0; line-height: 1.4; }
+.block p strong { color: #000; font-weight: bold; }
 .block ul { font-size: 1em; padding-left: 0; margin: 0.8em 0; list-style-type: none; }
 .block li { margin-bottom: 0.5em; display: flex; align-items: center; }
 .block li input[type="checkbox"] {
-  width: 3mm; /* Match PDF checkbox size */
-  height: 3mm; /* Match PDF checkbox size */
-  margin-right: 1.5mm; /* Match PDF checkbox text gap more closely */
+  width: 3mm;
+  height: 3mm;
+  margin-right: 1.5mm;
   flex-shrink: 0;
-  vertical-align: middle; /* Adjust for better alignment with text */
-  border: 1px solid #000; /* Mimic PDF rect */
-  appearance: none; /* Attempt to remove default styling */
-  -webkit-appearance: none; /* For Safari/Chrome */
+  vertical-align: middle;
+  border: 1px solid #000;
+  appearance: none;
+  -webkit-appearance: none;
 }
-.block .date { font-size: 0.9em; color: #555; margin-top: 1em; text-align: left; } /* Align date to the left */
-.block em { color: #444; font-style: normal; } /* For notes - remove italic */
-
-/* Hide non-print elements if any were added to print window body */
+.block .date { font-size: 0.9em; color: #555; margin-top: 1em; text-align: left; }
+.block em { color: #444; font-style: normal; }
 .no-print { display: none; }
 
-@media print { /* Styles for the main page's direct print, not the about:blank window */
+@media print {
   body { background-color: transparent; display: block; min-height: auto; margin:0; }
   .print-page-container {
-    /* General styles for print-page-container */
-    margin: 0; /* Reset preview margin */
-    padding: 6mm; /* Overall page margin, similar to PDF's x_offset */
+    margin: 0;
+    padding: 6mm;
     box-sizing: border-box;
-    width: 297mm; /* A4 landscape width */
-    /* Let height be determined by content + padding, remove fixed height:
-    height: 210mm; */
+    width: 297mm;
     display: flex;
-    justify-content: flex-start; /* Align block(s) to the left of the padded area */
-    align-items: center; /* Vertically center block(s) within the padded area */
-    overflow: hidden; /* Prevent container itself from causing unexpected breaks */
+    justify-content: flex-start;
+    align-items: center;
+    overflow: hidden;
   }
-  /* Changed page break strategy: apply before instead of after */
   .print-page-container:not(:first-of-type) {
-    page-break-before: always; /* Add page break before each container, except the first one */
+    page-break-before: always;
   }
   .block {
-    margin: 0; /* Reset preview margin, rely on container padding and flex gap */
+    margin: 0;
     box-shadow: none;
-    border: 1px solid #000; /* Match PDF border */
-    /* width: 140mm and height: 190mm are already set */
-    overflow: hidden; /* Good for print consistency */
+    border: 1px solid #000;
+    overflow: hidden;
   }
-  /* Add margin to the first block if it's not the only block on the page */
   .print-page-container > .block:first-child:not(:last-child) {
-    margin-right: 5mm; /* Space between the two blocks */
+    margin-right: 5mm;
   }
 }
 </style></head><body>${allBlocksHtml}<script>${injectedScript}<\/script></body></html>`
           );
-          win.document.close(); // Call close after writing content
+          win.document.close();
         });
       document
         .getElementById("downloadJsonBtn")
         .addEventListener("click", () => {
           const err = document.getElementById("errorMsg");
-          err.textContent = ""; // Clear previous errors
-          err.style.display = "none"; // Hide by default
+          err.textContent = "";
+          err.style.display = "none";
           if (!document.getElementById("checkAllFields").checked) {
             err.textContent =
               "Please confirm that all sections and codes have been checked.";
-            err.style.display = "block"; // Show error
+            err.style.display = "block";
             return;
           }
 
@@ -1259,7 +1141,7 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
             originalRawInput: document.getElementById("previewRaw").value,
           };
 
-          const jsonString = JSON.stringify(jsonData, null, 2); // null, 2 for pretty printing
+          const jsonString = JSON.stringify(jsonData, null, 2);
           const blob = new Blob([jsonString], { type: "application/json" });
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
@@ -1283,13 +1165,12 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
             reader.onload = function (e) {
               try {
                 const jsonData = JSON.parse(e.target.result);
-                // Basic validation for expected structure
                 if (
                   jsonData &&
                   typeof jsonData.serviceName !== "undefined" &&
                   Array.isArray(jsonData.codes)
                 ) {
-                  jsonData.id = Date.now() + Math.random(); // Ensure unique ID
+                  jsonData.id = Date.now() + Math.random();
                   printQueue.push(jsonData);
                   renderPrintQueue();
                 } else {
@@ -1305,7 +1186,6 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
             };
             reader.readAsText(file);
           });
-          // Reset file input to allow uploading the same file again if needed
           event.target.value = null;
         });
 
@@ -1313,15 +1193,8 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
         let base64FontRegular = await loadFontAsBase64(FONT_PATH_GLOBAL);
         let base64FontBold = await loadFontAsBase64(FONT_PATH_GLOBAL_BOLD);
 
-        // --- End Font Embedding Logic ---
-
         if (!base64FontRegular) {
-          // Check if the regular font failed to load
-          // Alert is already shown in loadFontAsBase64 if it fails.
-          // Decide if you want to proceed with default fonts or stop.
-          // For now, we'll let it proceed, but characters might be wrong.
           console.warn(
-            // Use console.warn for less intrusive message
             "Proceeding with PDF generation without custom font. Non-English characters may not display correctly."
           );
         }
@@ -1333,14 +1206,12 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
 
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({
-          orientation: "l", // landscape
+          orientation: "l",
           unit: "mm",
           format: "a4",
         });
 
-        const pdfFontName = "NotoSansUnicode"; // Consistent font name
-        // No need for pdfFontNameBold, jsPDF handles weights under the same family name
-
+        const pdfFontName = "NotoSansUnicode";
         if (base64FontRegular) {
           pdf.addFileToVFS(
             FONT_PATH_GLOBAL.split("/").pop(),
@@ -1360,48 +1231,37 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
           );
         }
 
-        // Set default font for the PDF
         pdf.setFont(pdfFontName, "normal");
 
-        // PDF Layout constants
-        const PDF_PAGE_WIDTH = 297; // A4 landscape width in mm
-        const PDF_PAGE_HEIGHT = 210; // A4 landscape height in mm
+        const PDF_PAGE_WIDTH = 297;
+        const PDF_PAGE_HEIGHT = 210;
         const PDF_BLOCK_WIDTH = 138;
         const PDF_BLOCK_HEIGHT = 190;
-        const PDF_INTER_BLOCK_MARGIN = 5; // mm
-        const PDF_BLOCK_PADDING = 12; // Increased internal padding for content within a block (was 10)
+        const PDF_INTER_BLOCK_MARGIN = 5;
+        const PDF_BLOCK_PADDING = 12;
 
-        // Font sizes (Points) - to match non-PDF mode more closely
         const PDF_TITLE_FONT_SIZE_PT = 18;
         const PDF_LOGIN_FONT_SIZE_PT = 10;
         const PDF_CODES_FONT_SIZE_PT = 10;
         const PDF_NOTE_FONT_SIZE_PT = 10;
         const PDF_DATE_FONT_SIZE_PT = 9;
 
-        // Line & Margin constants (mm)
         const PT_TO_MM = 0.352778;
-        const PDF_LINE_SPACING_FACTOR = 1.4; // Match non-PDF CSS line-height
+        const PDF_LINE_SPACING_FACTOR = 1.4;
 
-        const PDF_TITLE_MARGIN_TOP_MM = 2; // New: Extra top margin for service name
-        // New margin model to mimic CSS more closely
-        const MARGIN_COMMON_MM = 2.7; // Approx 0.75em of 10pt (for p, h2-bottom) - Increased from 2.2mm
-        const MARGIN_CODES_LIST_MM = 2.8; // Approx 0.8em of 10pt (for ul top/bottom) - Reverted from 3.3mm
-
-        const PDF_CODE_ITEM_MARGIN_BOTTOM_MM = 1.8; // Approx 0.5em of 10pt (li margin-bottom)
-        // Individual list/item margins are still useful, but inter-block element spacing will be uniform.
-
+        const PDF_TITLE_MARGIN_TOP_MM = 2;
+        const MARGIN_COMMON_MM = 2.7;
+        const MARGIN_CODES_LIST_MM = 2.8;
+        const PDF_CODE_ITEM_MARGIN_BOTTOM_MM = 1.8;
         const PDF_CHECKBOX_SIZE_MM = 3;
         const PDF_CHECKBOX_TEXT_GAP_MM = 1.5;
 
         for (let i = 0; i < printQueue.length; i += 2) {
           if (i > 0) {
             pdf.addPage("a4", "l");
-            // Re-apply default font on new page, jsPDF might reset it
             if (base64FontRegular) {
-              // Check if regular font was loaded
               pdf.setFont(pdfFontName, "normal");
             } else {
-              // Fallback if NotoSans-Regular wasn't loaded, jsPDF will use a default
             }
           }
 
@@ -1409,7 +1269,6 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
           if (printQueue[i]) itemsOnPage.push(printQueue[i]);
           if (i + 1 < printQueue.length) itemsOnPage.push(printQueue[i + 1]);
 
-          // Calculate starting X position. If one item, it takes the left slot.
           const startXForAllBlocks =
             (PDF_PAGE_WIDTH - (PDF_BLOCK_WIDTH * 2 + PDF_INTER_BLOCK_MARGIN)) /
             2;
@@ -1421,31 +1280,27 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
             const itemX =
               startXForAllBlocks +
               indexOnPage * (PDF_BLOCK_WIDTH + PDF_INTER_BLOCK_MARGIN);
-            let currentY = blockY + PDF_BLOCK_PADDING; // Start Y inside padding
+            let currentY = blockY + PDF_BLOCK_PADDING;
 
-            // Draw block border
-            pdf.setDrawColor(0); // Black
+            pdf.setDrawColor(0);
             pdf.rect(itemX, blockY, PDF_BLOCK_WIDTH, PDF_BLOCK_HEIGHT);
 
-            // Service Name
             if (itemData.serviceName) {
-              currentY += PDF_TITLE_MARGIN_TOP_MM; // Apply specific top margin for title
+              currentY += PDF_TITLE_MARGIN_TOP_MM;
               pdf.setFont(pdfFontName, "bold");
-              pdf.setTextColor(51, 51, 51); // #333
+              pdf.setTextColor(51, 51, 51);
               pdf.setFontSize(PDF_TITLE_FONT_SIZE_PT);
-              const titleMaxWidth = PDF_BLOCK_WIDTH - PDF_BLOCK_PADDING * 2; // Available width for title
+              const titleMaxWidth = PDF_BLOCK_WIDTH - PDF_BLOCK_PADDING * 2;
               const titleText = String(itemData.serviceName);
               const titleLineHeightMm =
                 PDF_TITLE_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
               pdf.text(titleText, itemX + PDF_BLOCK_PADDING, currentY, {
                 maxWidth: titleMaxWidth,
               });
-              currentY += titleLineHeightMm + MARGIN_COMMON_MM; // h2.marginBottom
+              currentY += titleLineHeightMm + MARGIN_COMMON_MM;
             }
 
-            // Login
             if (itemData.login) {
-              // No explicit top margin needed if using consistent PDF_ELEMENT_SPACING_MM from previous element
               pdf.setFont(pdfFontName, "bold");
               pdf.setTextColor(0, 0, 0);
               pdf.setFontSize(PDF_LOGIN_FONT_SIZE_PT);
@@ -1453,13 +1308,11 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
               const loginLineHeightMm =
                 PDF_LOGIN_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
               pdf.text(loginText, itemX + PDF_BLOCK_PADDING, currentY);
-              currentY += loginLineHeightMm; // Advance past text
-              currentY += MARGIN_COMMON_MM; // p.marginBottom
+              currentY += loginLineHeightMm;
+              currentY += MARGIN_COMMON_MM;
             }
 
-            // Date - New Position
             if (itemData.date) {
-              // No explicit top margin needed
               pdf.setFont(pdfFontName, "normal");
               pdf.setTextColor(85, 85, 85); // #555
               pdf.setFontSize(PDF_DATE_FONT_SIZE_PT);
@@ -1467,13 +1320,12 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
               const dateLineHeightMm =
                 PDF_DATE_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
               pdf.text(dateText, itemX + PDF_BLOCK_PADDING, currentY);
-              currentY += dateLineHeightMm; // Advance past text
-              currentY += MARGIN_COMMON_MM; // p.marginBottom
+              currentY += dateLineHeightMm;
+              currentY += MARGIN_COMMON_MM;
             }
 
-            // Codes
             if (itemData.codes && itemData.codes.length > 0) {
-              currentY += MARGIN_CODES_LIST_MM; // ul.marginTop
+              currentY += MARGIN_CODES_LIST_MM;
               pdf.setFont(pdfFontName, "normal");
               pdf.setTextColor(0, 0, 0);
 
@@ -1484,10 +1336,10 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
                 PDF_CHECKBOX_SIZE_MM -
                 PDF_CHECKBOX_TEXT_GAP_MM;
 
-              let localCodesContentHeight = 0; // To track height of codes items for overflow check
+              let localCodesContentHeight = 0;
 
               for (const code of codes) {
-                if (!code) continue; // Skip empty/null codes
+                if (!code) continue;
                 pdf.setFontSize(PDF_CODES_FONT_SIZE_PT);
                 const codeSingleLineHeightMm =
                   PDF_CODES_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
@@ -1503,21 +1355,21 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
                   ? PDF_NOTE_FONT_SIZE_PT *
                       PT_TO_MM *
                       PDF_LINE_SPACING_FACTOR *
-                      2 + // Estimate 2 lines of note
-                    MARGIN_COMMON_MM + // Note's p.marginTop
-                    MARGIN_COMMON_MM + // Note's p.marginBottom
-                    5 // Buffer
+                      2 +
+                    MARGIN_COMMON_MM +
+                    MARGIN_COMMON_MM +
+                    5
                   : 0;
                 const maxCodesY =
                   blockY +
                   PDF_BLOCK_HEIGHT -
                   PDF_BLOCK_PADDING -
                   estimatedNoteHeight -
-                  MARGIN_CODES_LIST_MM; // Space for codes list's own ul.marginBottom
+                  MARGIN_CODES_LIST_MM;
 
                 if (
-                  currentY + thisCodeBlockHeight > maxCodesY && // currentY is where this code item STARTS
-                  localCodesContentHeight > 0 // Only break if at least one code was already drawn
+                  currentY + thisCodeBlockHeight > maxCodesY &&
+                  localCodesContentHeight > 0
                 ) {
                   break;
                 }
@@ -1545,14 +1397,11 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
                 localCodesContentHeight += thisCodeBlockHeight;
               }
 
-              // After the loop, currentY is at the end of all drawn code items (including their internal bottom margins).
-              // Now add the codes list's (ul) bottom margin.
-              if (localCodesContentHeight > 0) currentY += MARGIN_CODES_LIST_MM; // ul.marginBottom
+              if (localCodesContentHeight > 0) currentY += MARGIN_CODES_LIST_MM;
             }
 
-            // Note (if exists, position towards bottom)
             if (itemData.note) {
-              currentY += MARGIN_COMMON_MM; // Note's p.marginTop
+              currentY += MARGIN_COMMON_MM;
               pdf.setFont(pdfFontName, "normal");
               pdf.setTextColor(68, 68, 68); // #444
               pdf.setFontSize(PDF_NOTE_FONT_SIZE_PT);
@@ -1569,7 +1418,7 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
                   blockY +
                     PDF_BLOCK_HEIGHT -
                     PDF_BLOCK_PADDING -
-                    MARGIN_COMMON_MM // Ensure note text + its p.marginBottom fits
+                    MARGIN_COMMON_MM
                 ) {
                   break;
                 }
@@ -1579,11 +1428,9 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
                   currentY
                 );
                 noteContentHeight += noteSingleLineHeightMm;
-                currentY += noteSingleLineHeightMm; // Advance Y for each line of the note
+                currentY += noteSingleLineHeightMm;
               }
               if (noteContentHeight > 0) {
-                // currentY is already past the note text.
-                // Add the note's (p) bottom margin.
                 currentY += MARGIN_COMMON_MM;
               }
             }
@@ -1619,7 +1466,6 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
 
       renderPrintQueue();
 
-      // --- New Menu Logic ---
       const mainMenuBtn = document.getElementById("mainMenuBtn");
       const appMenuItems = document.getElementById("appMenuItems");
       const menuItemTestParser = document.getElementById("menuItemTestParser");
@@ -1627,23 +1473,20 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
         "menuPdfModeCheckbox"
       );
 
-      // Initialize PDF Mode from the menu checkbox
-      // pdfModeActive is already defined and defaulted to true earlier
       menuPdfModeCheckbox.checked = pdfModeActive;
       menuPdfModeCheckbox.addEventListener("change", function (event) {
         pdfModeActive = event.target.checked;
       });
 
       mainMenuBtn.addEventListener("click", (event) => {
-        event.stopPropagation(); // Prevent click from immediately closing menu if body listener is active
+        event.stopPropagation();
         const isMenuOpen = appMenuItems.style.display === "block";
         appMenuItems.style.display = isMenuOpen ? "none" : "block";
       });
 
-      // Test Parser functionality (triggered from menu)
       menuItemTestParser.addEventListener("click", async () => {
-        appMenuItems.style.display = "none"; // Hide menu after click
-        await runParserTests(); // Call the refactored function
+        appMenuItems.style.display = "none";
+        await runParserTests();
       });
 
       // Click outside to close menu
@@ -1656,15 +1499,6 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
           appMenuItems.style.display = "none";
         }
       });
-      // --- End New Menu Logic ---
-
-      // Ensure the old standalone PDF mode checkbox (if any element with that ID still exists by mistake)
-      // does not interfere. The new one is menuPdfModeCheckbox.
-      // const oldPdfCheckbox = document.getElementById("pdfModeCheckbox");
-      // if (oldPdfCheckbox && oldPdfCheckbox !== menuPdfModeCheckbox) {
-      //   oldPdfCheckbox.removeEventListener("change", ...); // Or ensure it's removed from HTML
-      // }
-      // --- Parser Test Logic ---
       function areArraysEqual(arr1, arr2) {
         if (arr1 === arr2) return true;
         if (arr1 == null || arr2 == null) return false;
@@ -1724,12 +1558,9 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
               `  - Note: Expected "${expected.note}", Got "${parsedOutput.note}"`
             );
           }
-          // Only test the date if it was NOT artificially generated by parseRaw
           if (!parsedOutput.dateGenerated) {
             if (parsedOutput.date !== expected.date) {
-              mismatches.push(
-                `  - Date: Expected "${expected.date}", Got "${parsedOutput.date}"`
-              );
+              mismatches.push(`  - Date: Expected "${expected.date}", Got "${parsedOutput.date}"`); // prettier-ignore
             }
           } else {
             // If dateGenerated is true, we skip the date comparison as requested.
@@ -1753,7 +1584,6 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
         }
       }
 
-      // Refactored function to run parser tests
       async function runParserTests() {
         const testFiles = [
           "./tests/test1.json",

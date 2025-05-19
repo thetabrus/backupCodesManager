@@ -828,6 +828,14 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
       document
         .getElementById("downloadJsonBtn")
         .addEventListener("click", () => {
+          const err = document.getElementById("errorMsg");
+          err.textContent = ""; // Clear previous errors
+          if (!document.getElementById("checkAllFields").checked) {
+            err.textContent =
+              "Please confirm that all sections and codes have been checked.";
+            return;
+          }
+
           const srv = document.getElementById("serviceInput").value.trim();
           const log = document.getElementById("loginInput").value.trim();
           const notes = document.getElementById("noteInput").value.trim();

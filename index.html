@@ -11,6 +11,14 @@
       @font-face {
         font-family: "NotoSansUnicode";
         src: url("./NotoSans-Regular.ttf") format("truetype");
+        font-weight: normal;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "NotoSansUnicode";
+        src: url("./NotoSans-Bold.ttf") format("truetype"); /* Assuming you have a NotoSans-Bold.ttf */
+        font-weight: bold;
+        font-style: normal;
       }
       body {
         font-family: "NotoSansUnicode", sans-serif;
@@ -222,6 +230,7 @@
 
     <script>
       const FONT_PATH_GLOBAL = "./NotoSans-Regular.ttf"; // Used by PDF and potentially non-PDF print
+      const FONT_PATH_GLOBAL_BOLD = "./NotoSans-Bold.ttf"; // For bolder service names
 
       const sectionIds = [
         "checkService",
@@ -484,7 +493,7 @@
         if (!itemData) return "";
         const codesHtml = itemData.codes
           .map(
-            (v) => `<li><input type="checkbox" disabled checked /> ${v}</li>`
+            (v) => `<li><input type="checkbox" disabled /> ${v}</li>` // Removed 'checked'
           ) // Self-closed for tidiness
           .join("");
         // Add margin-right to the first block only if it's part of a pair on the page
@@ -494,6 +503,7 @@
         return `<div class="block" ${blockStyle}><h2>${
           itemData.serviceName
         }</h2><p><strong>${itemData.login}</strong></p><ul>${codesHtml}</ul>${
+          // h2 will use font-weight: bold from CSS
           itemData.note ? `<p><em>${itemData.note}</em></p>` : ""
         }<p class="date">${itemData.date}</p></div>`;
       }
@@ -526,8 +536,19 @@
           const win = window.open("", "_blank");
           win.document.write(
             `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Print Codes</title><style>
-@font-face { font-family: 'NotoSansUnicode'; src: url('${FONT_PATH_GLOBAL}') format('truetype'); } body {
-  font-family: sans-serif;
+@font-face {
+  font-family: 'NotoSansUnicode';
+  src: url('${FONT_PATH_GLOBAL}') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'NotoSansUnicode';
+  src: url('${FONT_PATH_GLOBAL_BOLD}') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+body {
   margin: 0;
   background-color: #f0f0f0; /* Preview background */
   display: flex; /* Center content in preview */
@@ -535,7 +556,7 @@
   align-items: center;
   min-height: 100vh;
 }
-body { font-family: 'NotoSansUnicode', sans-serif; } /* Apply Noto font to non-PDF print view */
+body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* Apply Noto font to non-PDF print view */
 .print-page-container { /* Container for one or two blocks in preview */
   display: flex;
   flex-direction: row;
@@ -555,16 +576,26 @@ body { font-family: 'NotoSansUnicode', sans-serif; } /* Apply Noto font to non-P
   background-color: white; /* White card background for preview */
   box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Subtle shadow for preview */
   overflow: hidden; /* Prevent content spill in preview */
-  font-family: 'NotoSansUnicode', sans-serif; /* Ensure blocks also use Noto */
+  font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; /* Ensure blocks also use Noto */
 }
-.block h2 { font-size: 1.8em; margin-top: 0; margin-bottom: 0.6em; color: #333; font-weight: bold;}
-.block p { font-size: 1em; margin: 0.6em 0; line-height: 1.4; }
+.block h2 {
+  font-family: 'NotoSansUnicode', sans-serif; /* Explicitly set for h2 */
+  font-weight: bold; /* Use the bold variant of NotoSansUnicode */
+  font-size: 1.8em; margin-top: 0; margin-bottom: 0.6em; color: #333;
+}
+.block p { font-size: 1em; margin: 0.6em 0; line-height: 1.4; } /* line-height is 1.4 */
 .block p strong { color: #000; font-weight: bold; } /* For login */
 .block ul { font-size: 1em; padding-left: 0; margin: 0.8em 0; list-style-type: none; }
 .block li { margin-bottom: 0.5em; display: flex; align-items: center; }
-.block li input[type="checkbox"] { transform: scale(1.3); margin-right: 10px; flex-shrink: 0; }
+.block li input[type="checkbox"] {
+  width: 3mm; /* Match PDF checkbox size */
+  height: 3mm; /* Match PDF checkbox size */
+  margin-right: 1.5mm; /* Match PDF checkbox text gap */
+  flex-shrink: 0;
+  vertical-align: middle; /* Adjust for better alignment with text */
+}
 .block .date { font-size: 0.9em; color: #555; margin-top: 1em; text-align: right; }
-.block em { color: #444; font-style: italic; } /* For notes */
+.block em { color: #444; font-style: normal; } /* For notes - remove italic */
 
 /* Hide non-print elements if any were added to print window body */
 .no-print { display: none; }
@@ -674,19 +705,18 @@ body { font-family: 'NotoSansUnicode', sans-serif; } /* Apply Noto font to non-P
         });
 
       async function generateAndDownloadPdf() {
-        // --- Font Embedding Logic ---
-        // const fontPath = "./NotoSans-Regular.ttf"; // Path to the font file - now using FONT_PATH_GLOBAL
-        const pdfFontName = "NotoSansUnicode"; // A name for jsPDF and CSS
-
-        let base64Font = await loadFontAsBase64(FONT_PATH_GLOBAL);
+        let base64FontRegular = await loadFontAsBase64(FONT_PATH_GLOBAL);
+        let base64FontBold = await loadFontAsBase64(FONT_PATH_GLOBAL_BOLD);
 
         // --- End Font Embedding Logic ---
 
-        if (!base64Font) {
+        if (!base64FontRegular) {
+          // Check if the regular font failed to load
           // Alert is already shown in loadFontAsBase64 if it fails.
           // Decide if you want to proceed with default fonts or stop.
           // For now, we'll let it proceed, but characters might be wrong.
-          alert(
+          console.warn(
+            // Use console.warn for less intrusive message
             "Proceeding with PDF generation without custom font. Non-English characters may not display correctly."
           );
         }
@@ -703,156 +733,265 @@ body { font-family: 'NotoSansUnicode', sans-serif; } /* Apply Noto font to non-P
           format: "a4",
         });
 
-        if (base64Font) {
-          pdf.addFileToVFS(FONT_PATH_GLOBAL.split("/").pop(), base64Font); // e.g., 'NotoSans-Regular.ttf'
+        const pdfFontName = "NotoSansUnicode"; // Consistent font name
+        // No need for pdfFontNameBold, jsPDF handles weights under the same family name
+
+        if (base64FontRegular) {
+          pdf.addFileToVFS(
+            FONT_PATH_GLOBAL.split("/").pop(),
+            base64FontRegular
+          );
           pdf.addFont(FONT_PATH_GLOBAL.split("/").pop(), pdfFontName, "normal");
-          pdf.setFont(pdfFontName); // Set this font as active for jsPDF
+        }
+        if (base64FontBold) {
+          pdf.addFileToVFS(
+            FONT_PATH_GLOBAL_BOLD.split("/").pop(),
+            base64FontBold
+          );
+          pdf.addFont(
+            FONT_PATH_GLOBAL_BOLD.split("/").pop(),
+            pdfFontName,
+            "bold"
+          );
         }
 
-        // CSS for PDF rendering. This needs to be carefully crafted.
-        const printCSS = `
-          @font-face { font-family: '${pdfFontName}'; src: url('${FONT_PATH_GLOBAL}'); } /* Helps html2canvas find the font */
-          body { font-family: '${pdfFontName}', sans-serif; margin: 0; } /* Apply Noto to body for PDF rendering context */
-          .print-page-container-for-pdf { /* This container will be dynamically sized */
-            display: flex;
-            justify-content: flex-start; /* Blocks align to the left within this container */
-            /* width and height will be set via JS to fit content tightly */
-            box-sizing: border-box; /* No padding here; offsets will handle page margins */
-            overflow: hidden;
-          }
-          .block {
-            font-family: '${
-              base64Font ? pdfFontName : "sans-serif"
-            }'; /* Use embedded font, fallback to sans-serif */
-            width: 138mm;  /* Consistent width */
-            height: 190mm; /* Consistent height, was 188mm, changed for consistency */
-            box-sizing: border-box;
-            border: 1px solid #000;
-            /* margin-right is now handled by generateBlockHtml for the first block in a pair */
-            padding: 10mm;
-            font-size: 10pt; /* Base font size */
-            background-color: white;
-            overflow: hidden;
-            color: #000; /* Ensure text is black */
-          }
-          .block:last-child { margin-right: 0; }
-          .block h2 { font-size: 1.8em; margin-top: 0; margin-bottom: 0.6em; color: #000; font-weight: bold;}
-          .block p { font-size: 1em; margin: 0.6em 0; line-height: 1.4; color: #000;}
-          .block p strong { color: #000; font-weight: bold; }
-          .block ul { font-size: 1em; padding-left: 0; margin: 0.8em 0; list-style-type: none; color: #000;}
-          .block li { margin-bottom: 0.5em; display: flex; align-items: center; color: #000;}
-          .block li input[type="checkbox"] { /* Basic visual representation for PDF */
-            display: inline-block; width: 3mm; height: 3mm; margin-right: 3mm;
-            border: 0.5mm solid #000; background-color: #fff; vertical-align: middle;
-            position: relative; /* For pseudo-element checkmark */
-          }
-          .block li input[type="checkbox"]:checked::before { /* Simple checkmark */
-            content: '✔';
-            position: absolute;
-            top: -0.5mm; left: 0.5mm;
-            font-size: 3mm;
-            color: #000;
-          }
-          .block .date { font-size: 0.9em; color: #333; margin-top: 1em; text-align: right; }
-          .block em { color: #333; font-style: italic; }
-        `;
+        // Set default font for the PDF
+        pdf.setFont(pdfFontName, "normal");
 
-        const styleElement = document.createElement("style");
-        styleElement.id = "tempPrintStylesForPdf";
-        styleElement.type = "text/css";
-        styleElement.appendChild(document.createTextNode(printCSS));
-        document.head.appendChild(styleElement);
+        // PDF Layout constants
+        const PDF_PAGE_WIDTH = 297; // A4 landscape width in mm
+        const PDF_PAGE_HEIGHT = 210; // A4 landscape height in mm
+        const PDF_BLOCK_WIDTH = 138;
+        const PDF_BLOCK_HEIGHT = 190;
+        const PDF_INTER_BLOCK_MARGIN = 5; // mm
+        const PDF_BLOCK_PADDING = 10; // Internal padding for content within a block
 
-        const pdfPageWidth = 297; // A4 landscape width in mm
-        const pdfPageHeight = 210; // A4 landscape height in mm
-        const blockNominalHeight = 190; // mm - Updated to match CSS (was 188mm)
-        const blockNominalWidth = 138; // mm - Updated to match CSS
-        const interBlockMargin = 5; // mm
-        const scaleFactor = 96 / 25.4; // Approx pixels per mm for html2canvas windowWidth/Height
+        // Font sizes (Points) - to match non-PDF mode more closely
+        const PDF_TITLE_FONT_SIZE_PT = 18;
+        const PDF_LOGIN_FONT_SIZE_PT = 10;
+        const PDF_CODES_FONT_SIZE_PT = 10;
+        const PDF_NOTE_FONT_SIZE_PT = 10;
+        const PDF_DATE_FONT_SIZE_PT = 9;
+
+        // Line & Margin constants (mm) - derived from non-PDF CSS
+        const PT_TO_MM = 0.352778;
+        const PDF_LINE_SPACING_FACTOR = 1.4; // Match non-PDF CSS line-height
+
+        const PDF_TITLE_MARGIN_BOTTOM_MM = 2.2; // Approx 0.6em of 10pt
+        const PDF_LOGIN_MARGIN_BOTTOM_MM = 2.2; // Approx 0.6em of 10pt
+        const PDF_CODES_LIST_MARGIN_TOP_MM = 2.8; // Approx 0.8em of 10pt (ul margin-top)
+        const PDF_CODE_ITEM_MARGIN_BOTTOM_MM = 1.8; // Approx 0.5em of 10pt (li margin-bottom)
+        const PDF_CODES_LIST_MARGIN_BOTTOM_MM = 2.8; // Approx 0.8em of 10pt (ul margin-bottom)
+        const PDF_NOTE_MARGIN_TOP_MM = 2.2; // Approx 0.6em (p margin-top)
+        const PDF_NOTE_MARGIN_BOTTOM_MM = 2.2; // Approx 0.6em (p margin-bottom)
+        // Date is positioned at bottom right; its top margin is effectively the remaining space or a fixed offset from note.
+
+        const PDF_CHECKBOX_SIZE_MM = 3;
+        const PDF_CHECKBOX_TEXT_GAP_MM = 1.5;
 
         for (let i = 0; i < printQueue.length; i += 2) {
-          // Create a new temporary div for each page's content to ensure isolation
-          const pageSpecificTempRenderDiv = document.createElement("div");
-          Object.assign(pageSpecificTempRenderDiv.style, {
-            position: "absolute",
-            left: "-3500px", // Ensure it's far off-screen
-            top: "-3500px",
-            width: "auto", // Will be set by content
-            height: "auto", // Will be set by content
-            // visibility: "hidden", // Rely on off-screen positioning
-          });
-          document.body.appendChild(pageSpecificTempRenderDiv);
-
-          // If it's not the very first page, add a new page before rendering content
           if (i > 0) {
             pdf.addPage("a4", "l");
-            if (base64Font) {
-              pdf.setFont(pdfFontName);
-            } // Closes if (base64Font)
-          } // Closes if (i > 0)
-          let pageHtml = `<div class="print-page-container-for-pdf">`; // This will be the content of pageSpecificTempRenderDiv
-          let blocksOnThisPage = 0;
-          let currentPageContentWidth = 0;
-
-          // First block for the current page
-          if (printQueue[i]) {
-            blocksOnThisPage++;
-            currentPageContentWidth += blockNominalWidth;
-            const isPairOnThisPage = i + 1 < printQueue.length; // Will there be a second block on this page?
-            pageHtml += generateBlockHtml(
-              printQueue[i],
-              true,
-              isPairOnThisPage
-            );
+            // Re-apply default font on new page, jsPDF might reset it
+            if (base64FontRegular) {
+              // Check if regular font was loaded
+              pdf.setFont(pdfFontName, "normal");
+            } else {
+              // Fallback if NotoSans-Regular wasn't loaded, jsPDF will use a default
+            }
           }
 
-          // Second block for the current page, if it exists in the queue
-          if (i + 1 < printQueue.length) {
-            blocksOnThisPage++;
-            currentPageContentWidth += interBlockMargin + blockNominalWidth; // Add margin only if two blocks
-            pageHtml += generateBlockHtml(printQueue[i + 1], false, true); // Second block is never "firstInPair", always part of a pair if it exists
-          }
-          pageHtml += `</div>`;
+          const itemsOnPage = [];
+          if (printQueue[i]) itemsOnPage.push(printQueue[i]);
+          if (i + 1 < printQueue.length) itemsOnPage.push(printQueue[i + 1]);
 
-          pageSpecificTempRenderDiv.innerHTML = pageHtml;
-          const containerElement = pageSpecificTempRenderDiv.firstChild; // Get the actual container we just created
+          // Calculate starting X position. If one item, it takes the left slot.
+          const startXForAllBlocks =
+            (PDF_PAGE_WIDTH - (PDF_BLOCK_WIDTH * 2 + PDF_INTER_BLOCK_MARGIN)) /
+            2;
+          const blockY = (PDF_PAGE_HEIGHT - PDF_BLOCK_HEIGHT) / 2;
 
-          // Dynamically set the container's dimensions to tightly wrap its content
-          containerElement.style.width = `${currentPageContentWidth}mm`;
-          containerElement.style.height = `${blockNominalHeight}mm`;
+          itemsOnPage.forEach((itemData, indexOnPage) => {
+            if (!itemData) return;
 
-          // Calculate the consistent X offset for the content area
-          // This margin is based on fitting two blocks and their interconnecting margin.
-          const x_offset =
-            (pdfPageWidth - (blockNominalWidth * 2 + interBlockMargin)) / 2;
-          const y_offset = (pdfPageHeight - blockNominalHeight) / 2;
+            const itemX =
+              startXForAllBlocks +
+              indexOnPage * (PDF_BLOCK_WIDTH + PDF_INTER_BLOCK_MARGIN);
+            let currentY = blockY + PDF_BLOCK_PADDING; // Start Y inside padding
 
-          // Use html2canvas directly to render the element to a canvas
-          const canvas = await html2canvas(containerElement, {
-            scale: 2, // Increase scale for better resolution in PDF. Adjust as needed.
-            useCORS: true, // Good practice, though font is local via @font-face
-            logging: false, // Suppress html2canvas console logs
-            backgroundColor: null, // Ensures transparency if parts of the element are transparent
+            // Draw block border
+            pdf.setDrawColor(0); // Black
+            pdf.rect(itemX, blockY, PDF_BLOCK_WIDTH, PDF_BLOCK_HEIGHT);
+
+            // Service Name
+            pdf.setFont(pdfFontName, "bold"); // Use bold variant
+            pdf.setFontSize(PDF_TITLE_FONT_SIZE_PT);
+            const titleText = itemData.serviceName || "Untitled";
+            const titleLineHeightMm =
+              PDF_TITLE_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
+            pdf.text(titleText, itemX + PDF_BLOCK_PADDING, currentY, {
+              // charSpace: 0.1, // Optional: if you want letter spacing
+            });
+            currentY += titleLineHeightMm + PDF_TITLE_MARGIN_BOTTOM_MM;
+
+            // Login
+            pdf.setFont(pdfFontName, "normal"); // Switch back to normal weight
+            pdf.setFontSize(PDF_LOGIN_FONT_SIZE_PT);
+            const loginText = itemData.login || "";
+            const loginLineHeightMm =
+              PDF_LOGIN_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
+            // For strong tag, jsPDF doesn't directly support nested font weights in one text call.
+            // We'll render it as normal weight here. If true bold for login is needed, it'd require separate text calls.
+            pdf.text(loginText, itemX + PDF_BLOCK_PADDING, currentY);
+            currentY += loginLineHeightMm + PDF_LOGIN_MARGIN_BOTTOM_MM;
+
+            // Codes
+            pdf.setFont(pdfFontName, "normal"); // Ensure normal weight for codes
+            currentY += PDF_CODES_LIST_MARGIN_TOP_MM;
+            const codes = itemData.codes || [];
+            const textMaxWidthForCode =
+              PDF_BLOCK_WIDTH -
+              PDF_BLOCK_PADDING * 2 -
+              PDF_CHECKBOX_SIZE_MM -
+              PDF_CHECKBOX_TEXT_GAP_MM;
+
+            const codesStartY = currentY;
+            let codesContentHeight = 0;
+
+            codes.forEach((code) => {
+              pdf.setFontSize(PDF_CODES_FONT_SIZE_PT);
+              const codeSingleLineHeightMm =
+                PDF_CODES_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
+              const codeLines = pdf.splitTextToSize(code, textMaxWidthForCode);
+              const thisCodeBlockHeight =
+                codeLines.length * codeSingleLineHeightMm +
+                PDF_CODE_ITEM_MARGIN_BOTTOM_MM;
+
+              // Simplified overflow check: estimate remaining space for date and note
+              const estimatedDateHeight =
+                PDF_DATE_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR + 5; // 5mm for margin/buffer
+              const estimatedNoteHeight = itemData.note
+                ? PDF_NOTE_FONT_SIZE_PT *
+                    PT_TO_MM *
+                    PDF_LINE_SPACING_FACTOR *
+                    2 +
+                  PDF_NOTE_MARGIN_TOP_MM +
+                  PDF_NOTE_MARGIN_BOTTOM_MM +
+                  5
+                : 0; // rough estimate for 2 lines + margins
+              const maxCodesY =
+                blockY +
+                PDF_BLOCK_HEIGHT -
+                PDF_BLOCK_PADDING -
+                estimatedDateHeight -
+                estimatedNoteHeight -
+                PDF_CODES_LIST_MARGIN_BOTTOM_MM;
+
+              if (
+                currentY + thisCodeBlockHeight > maxCodesY &&
+                codesContentHeight > 0 // Allow at least one code if it fits initially
+              ) {
+                return;
+              }
+
+              // Draw checkbox (simple square)
+              pdf.rect(
+                itemX + PDF_BLOCK_PADDING,
+                currentY - PDF_CHECKBOX_SIZE_MM * 0.75, // Align with text baseline
+                PDF_CHECKBOX_SIZE_MM,
+                PDF_CHECKBOX_SIZE_MM
+              );
+              // No checkmark, as per request for unchecked boxes
+
+              let tempY = currentY;
+              for (const line of codeLines) {
+                pdf.text(
+                  line,
+                  itemX +
+                    PDF_BLOCK_PADDING +
+                    PDF_CHECKBOX_SIZE_MM +
+                    PDF_CHECKBOX_TEXT_GAP_MM,
+                  tempY
+                );
+                tempY += codeSingleLineHeightMm;
+              }
+              currentY += thisCodeBlockHeight;
+              codesContentHeight += thisCodeBlockHeight;
+            });
+            if (codesContentHeight > 0) {
+              // Only add bottom margin if codes were drawn
+              currentY =
+                codesStartY +
+                codesContentHeight -
+                PDF_CODE_ITEM_MARGIN_BOTTOM_MM +
+                PDF_CODES_LIST_MARGIN_BOTTOM_MM;
+            } else {
+              // No codes drawn, remove the top margin for the list
+              currentY -= PDF_CODES_LIST_MARGIN_TOP_MM;
+            }
+
+            // Note (if exists, position towards bottom)
+            const dateLineHeightMm =
+              PDF_DATE_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
+            const dateAreaHeightWithMargin = itemData.date
+              ? dateLineHeightMm + 5
+              : 0; // 5mm buffer for date margin
+            let noteAvailableYStart = currentY; // Start note after codes
+
+            if (itemData.note) {
+              currentY += PDF_NOTE_MARGIN_TOP_MM;
+              pdf.setFont(pdfFontName, "normal"); // No italics for note
+              pdf.setFontSize(PDF_NOTE_FONT_SIZE_PT);
+              const noteSingleLineHeightMm =
+                PDF_NOTE_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
+              const noteLines = pdf.splitTextToSize(
+                itemData.note,
+                PDF_BLOCK_WIDTH - PDF_BLOCK_PADDING * 2
+              );
+              let noteContentHeight = 0;
+              for (const line of noteLines) {
+                if (
+                  currentY + noteSingleLineHeightMm >
+                  blockY +
+                    PDF_BLOCK_HEIGHT -
+                    PDF_BLOCK_PADDING -
+                    dateAreaHeightWithMargin
+                ) {
+                  break; // Stop if note overflows into date area
+                }
+                pdf.text(line, itemX + PDF_BLOCK_PADDING, currentY);
+                currentY += noteSingleLineHeightMm;
+                noteContentHeight += noteSingleLineHeightMm;
+              }
+              if (noteContentHeight > 0) {
+                currentY += PDF_NOTE_MARGIN_BOTTOM_MM;
+              } else {
+                // No note drawn, remove top margin
+                currentY -= PDF_NOTE_MARGIN_TOP_MM;
+              }
+            }
+
+            // Date (if exists, position at bottom right)
+            if (itemData.date) {
+              pdf.setFont(pdfFontName, "normal"); // Ensure normal weight for date
+              pdf.setFontSize(PDF_DATE_FONT_SIZE_PT);
+              const dateYPos =
+                blockY +
+                PDF_BLOCK_HEIGHT -
+                PDF_BLOCK_PADDING -
+                dateLineHeightMm * 0.3; // Position baseline slightly above bottom padding edge
+              const dateTextWidth =
+                (pdf.getStringUnitWidth(itemData.date) *
+                  PDF_DATE_FONT_SIZE_PT) /
+                pdf.internal.scaleFactor;
+              pdf.text(
+                itemData.date,
+                itemX + PDF_BLOCK_WIDTH - PDF_BLOCK_PADDING - dateTextWidth,
+                dateYPos
+              );
+            }
           });
-          const imgData = canvas.toDataURL("image/png");
-
-          // Add the generated image to the PDF
-          // Note: addImage uses the current page. If pdfCurrentPageNum > 1, addPage() should have been called.
-          // pdf.setPage(pdfPageCounter); // addPage makes the new page active, setPage is not needed here
-          pdf.addImage(
-            imgData,
-            "PNG",
-            // Use the calculated offsets and dimensions
-            x_offset,
-            y_offset,
-            currentPageContentWidth,
-            blockNominalHeight
-          );
-
-          document.body.removeChild(pageSpecificTempRenderDiv); // Clean up this page's specific temporary div
         }
-
-        document.head.removeChild(styleElement);
         pdf.save("backup-codes.pdf");
       }
 
@@ -874,7 +1013,8 @@ body { font-family: 'NotoSansUnicode', sans-serif; } /* Apply Noto font to non-P
           return btoa(binary);
         } catch (error) {
           console.error(error);
-          alert(
+          console.warn(
+            // Use console.warn for less intrusive message
             `Error loading font from ${fontUrl}: ${error.message}. PDF might not render special characters correctly.`
           );
           return null; // Return null if font loading fails

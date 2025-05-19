@@ -105,6 +105,18 @@
         margin-bottom: var(--m3-spacing-l);
       }
 
+      #printQueueSection legend {
+        float: left; /* Let it shrink to content */
+        width: auto; /* Override general legend's width: 100% */
+        /* padding-left and padding-right will be inherited from general legend (0) */
+      }
+
+      #originalTextSection legend,
+      #printDataSection legend {
+        float: left;
+        width: auto;
+      }
+
       h1 {
         font-size: 2.25rem; /* 36px */
         font-weight: 700;
@@ -144,6 +156,8 @@
       #rawSection {
         /* Apply card style to #rawSection as well */
         padding: var(--m3-spacing-l); /* Uniform padding inside the card */
+        padding-right: var(--m3-spacing-l);
+        padding-bottom: var(--m3-spacing-l);
         background-color: var(--m3-surface);
         border: none; /* Remove default fieldset border */
         border-radius: var(--m3-border-radius-l);
@@ -162,19 +176,20 @@
         font-size: 1.5rem; /* 24px */
         font-weight: 600;
         color: var(--m3-on-surface-variant);
-        /* Add small horizontal padding to inset the text slightly */
-        padding-left: var(--m3-spacing-xs);
-        padding-right: var(--m3-spacing-xs);
-        padding-bottom: var(--m3-spacing-s); /* Space for border */
-        margin-left: 0;
-        margin-right: 0;
-        margin-bottom: var(--m3-spacing-l);
+
+        /* Indent legend content to align with fieldset's padding */
+        padding-left: 0; /* Reverted for float approach */
+        padding-right: 0; /* Reverted for float approach */
+        padding-bottom: var(--m3-spacing-xs); /* Reduced space for border */
+
+        margin-left: 0; /* Aligns to the start of the fieldset's content box */
+        margin-right: 0; /* Aligns to the end of the fieldset's content box */
+        margin-bottom: var(--m3-spacing-m); /* Reduced bottom margin */
         border-bottom: 1px solid var(--m3-surface-variant);
-        width: 100%; /* Make legend span full width of fieldset padding box */
+        /* width: 100%; Reverted: Floated legends use width: auto */
         display: block; /* Ensure it behaves as a block for width */
         box-sizing: border-box; /* Be explicit to ensure padding is handled as expected */
       }
-
       .section-header {
         display: flex;
         align-items: center;
@@ -437,9 +452,6 @@
       }
 
       /* Print Queue Section */
-      #printQueueSection legend {
-        margin-bottom: var(--m3-spacing-l);
-      }
       #queueControls {
         display: flex;
         flex-wrap: wrap;
@@ -447,6 +459,21 @@
         margin-bottom: var(--m3-spacing-l);
         align-items: center;
       }
+      /* Clear the float of the legend so controls sit below it */
+      #printQueueSection legend + #queueControls {
+        clear: both;
+      }
+
+      /* Clear the float for Original Text legend */
+      #originalTextSection legend + #previewRaw {
+        clear: both;
+      }
+
+      /* Clear the float for Print Data legend (targets the first .section-header) */
+      #printDataSection legend + .section-header {
+        clear: both;
+      }
+
       #printQueueList {
         list-style: none;
         padding: 0;
@@ -582,7 +609,7 @@
       <button id="parseBtn">Parse and Edit</button>
     </div>
     <form id="editForm" style="display: none">
-      <fieldset>
+      <fieldset id="originalTextSection">
         <legend>Original Text</legend>
         <textarea
           id="previewRaw"
@@ -590,7 +617,7 @@
           style="width: 100%; height: 100px"
         ></textarea>
       </fieldset>
-      <fieldset>
+      <fieldset id="printDataSection">
         <legend>Print Data</legend>
         <div class="section-header">
           <input type="checkbox" id="checkService" /><label for="serviceInput"

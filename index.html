@@ -3,6 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- html2canvas is often used by jsPDF's html method, ensure it's available if complex rendering is needed -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <title>Backup Codes Manager</title>
     <style>
       body {
@@ -102,6 +105,30 @@
   </head>
   <body>
     <h1>Backup 2FA Codes Manager</h1>
+    <div
+      id="pdfModeToggleContainer"
+      style="
+        position: fixed;
+        top: 10px;
+        right: 20px;
+        z-index: 1000;
+        background: white;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      "
+    >
+      <label for="pdfModeCheckbox" style="margin-right: 5px; font-size: 0.9em"
+        >PDF Mode:</label
+      >
+      <input
+        type="checkbox"
+        id="pdfModeCheckbox"
+        style="vertical-align: middle"
+      />
+    </div>
+
     <div id="rawSection">
       <p>Paste the raw text with the list of backup codes:</p>
       <textarea id="rawInput" placeholder="Paste raw text..."></textarea>
@@ -196,6 +223,13 @@
         "checkNote",
         "checkDate",
       ];
+
+      let pdfModeActive = false;
+      document
+        .getElementById("pdfModeCheckbox")
+        .addEventListener("change", function (event) {
+          pdfModeActive = event.target.checked;
+        });
 
       // Style for the file input label to look like a button
       const style = document.createElement("style");
@@ -435,11 +469,29 @@
         }
       });
 
+      // Hoist generateBlockHtml to be accessible by PDF generation logic
+      function generateBlockHtml(itemData) {
+        if (!itemData) return "";
+        const codesHtml = itemData.codes
+          .map((v) => `<li><input type="checkbox" disabled checked> ${v}</li>`)
+          .join("");
+        return `<div class="block"><h2>${itemData.serviceName}</h2><p><strong>${
+          itemData.login
+        }</strong></p><ul>${codesHtml}</ul>${
+          itemData.note ? `<p><em>${itemData.note}</em></p>` : ""
+        }<p class="date">${itemData.date}</p></div>`;
+      }
+
       document
         .getElementById("printAllQueuedBtn")
         .addEventListener("click", () => {
           if (printQueue.length === 0) {
             alert("Print queue is empty.");
+            return;
+          }
+
+          if (pdfModeActive) {
+            generateAndDownloadPdf();
             return;
           }
 
@@ -453,22 +505,6 @@
               allBlocksHtml += generateBlockHtml(item2);
             }
             allBlocksHtml += `</div>`;
-          }
-
-          function generateBlockHtml(itemData) {
-            if (!itemData) return "";
-            const codesHtml = itemData.codes
-              .map(
-                (v) => `<li><input type="checkbox" disabled checked> ${v}</li>`
-              )
-              .join("");
-            return `<div class="block"><h2>${
-              itemData.serviceName
-            }</h2><p><strong>${
-              itemData.login
-            }</strong></p><ul>${codesHtml}</ul>${
-              itemData.note ? `<p><em>${itemData.note}</em></p>` : ""
-            }<p class="date">${itemData.date}</p></div>`;
           }
 
           const win = window.open("", "_blank");
@@ -598,6 +634,105 @@ body {
           // Reset file input to allow uploading the same file again if needed
           event.target.value = null;
         });
+
+      async function generateAndDownloadPdf() {
+        if (printQueue.length === 0) {
+          alert("Print queue is empty for PDF generation.");
+          return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+          orientation: "l", // landscape
+          unit: "mm",
+          format: "a4",
+        });
+
+        // CSS for PDF rendering. This needs to be carefully crafted.
+        const printCSS = `
+          body { font-family: sans-serif; margin: 0; }
+          .print-page-container-for-pdf {
+            display: flex;
+            justify-content: flex-start;
+            width: 297mm; /* A4 landscape width */
+            height: 210mm; /* A4 landscape height */
+            box-sizing: border-box;
+            padding: 5mm; /* Overall page margin for PDF */
+            overflow: hidden;
+          }
+          .block {
+            width: 140mm;
+            height: 190mm;
+            box-sizing: border-box;
+            border: 1px solid #000; /* Ensure border is visible */
+            margin-right: 5mm;
+            padding: 10mm;
+            font-size: 10pt;
+            background-color: white;
+            overflow: hidden;
+            color: #000; /* Ensure text is black */
+          }
+          .block:last-child { margin-right: 0; }
+          .block h2 { font-size: 1.8em; margin-top: 0; margin-bottom: 0.6em; color: #000; font-weight: bold;}
+          .block p { font-size: 1em; margin: 0.6em 0; line-height: 1.4; color: #000;}
+          .block p strong { color: #000; font-weight: bold; }
+          .block ul { font-size: 1em; padding-left: 0; margin: 0.8em 0; list-style-type: none; color: #000;}
+          .block li { margin-bottom: 0.5em; display: flex; align-items: center; color: #000;}
+          .block li input[type="checkbox"] { /* Basic visual representation for PDF */
+            display: inline-block; width: 3mm; height: 3mm; margin-right: 3mm;
+            border: 0.5mm solid #000; background-color: #fff; vertical-align: middle;
+            position: relative; /* For pseudo-element checkmark */
+          }
+          .block li input[type="checkbox"]:checked::before { /* Simple checkmark */
+            content: '✔';
+            position: absolute;
+            top: -0.5mm; left: 0.5mm;
+            font-size: 3mm;
+            color: #000;
+          }
+          .block .date { font-size: 0.9em; color: #333; margin-top: 1em; text-align: right; }
+          .block em { color: #333; font-style: italic; }
+        `;
+
+        const styleElement = document.createElement("style");
+        styleElement.id = "tempPrintStylesForPdf";
+        styleElement.type = "text/css";
+        styleElement.appendChild(document.createTextNode(printCSS));
+        document.head.appendChild(styleElement);
+
+        const tempRenderDiv = document.createElement("div");
+        tempRenderDiv.style.position = "absolute";
+        tempRenderDiv.style.left = "-2000px"; // Further off-screen
+        tempRenderDiv.style.top = "-2000px";
+        tempRenderDiv.style.width = "297mm"; // A4 landscape width
+        tempRenderDiv.style.height = "210mm"; // A4 landscape height
+        document.body.appendChild(tempRenderDiv);
+
+        for (let i = 0; i < printQueue.length; i += 2) {
+          let pageHtml = `<div class="print-page-container-for-pdf">`;
+          pageHtml += generateBlockHtml(printQueue[i]);
+          if (i + 1 < printQueue.length) {
+            pageHtml += generateBlockHtml(printQueue[i + 1]);
+          }
+          pageHtml += `</div>`;
+          tempRenderDiv.innerHTML = pageHtml;
+
+          await pdf.html(tempRenderDiv.firstChild, {
+            x: 0,
+            y: 0,
+            width: 297,
+            windowWidth: 1122 /* approx 297mm in px @ 96dpi */,
+          });
+          if (i + 1 < printQueue.length - 1) {
+            // Check if there are more pages to add
+            pdf.addPage("a4", "l");
+          }
+        }
+
+        document.body.removeChild(tempRenderDiv);
+        document.head.removeChild(styleElement);
+        pdf.save("backup-codes.pdf");
+      }
 
       renderPrintQueue(); // Initial render of the queue (will show empty message)
     </script>

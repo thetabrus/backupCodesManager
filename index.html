@@ -636,6 +636,23 @@ body {
         });
 
       async function generateAndDownloadPdf() {
+        // --- Font Embedding Logic ---
+        const fontPath = "./NotoSans-Regular.ttf"; // Path to the font file
+        const pdfFontName = "NotoSansUnicode"; // A name for jsPDF and CSS
+
+        let base64Font = await loadFontAsBase64(fontPath);
+
+        // --- End Font Embedding Logic ---
+
+        if (!base64Font) {
+          // Alert is already shown in loadFontAsBase64 if it fails.
+          // Decide if you want to proceed with default fonts or stop.
+          // For now, we'll let it proceed, but characters might be wrong.
+          alert(
+            "Proceeding with PDF generation without custom font. Non-English characters may not display correctly."
+          );
+        }
+
         if (printQueue.length === 0) {
           alert("Print queue is empty for PDF generation.");
           return;
@@ -648,8 +665,15 @@ body {
           format: "a4",
         });
 
+        if (base64Font) {
+          pdf.addFileToVFS(fontPath.split("/").pop(), base64Font); // e.g., 'NotoSans-Regular.ttf'
+          pdf.addFont(fontPath.split("/").pop(), pdfFontName, "normal");
+          pdf.setFont(pdfFontName); // Set this font as active for jsPDF
+        }
+
         // CSS for PDF rendering. This needs to be carefully crafted.
         const printCSS = `
+          @font-face { font-family: '${pdfFontName}'; src: url('${fontPath}'); } /* Helps html2canvas find the font */
           body { font-family: sans-serif; margin: 0; }
           .print-page-container-for-pdf {
             display: flex;
@@ -661,13 +685,16 @@ body {
             overflow: hidden;
           }
           .block {
-            width: 140mm;
+            font-family: '${
+              base64Font ? pdfFontName : "sans-serif"
+            }'; /* Use embedded font, fallback to sans-serif */
+            width: 140mm; 
             height: 190mm;
             box-sizing: border-box;
             border: 1px solid #000; /* Ensure border is visible */
             margin-right: 5mm;
             padding: 10mm;
-            font-size: 10pt;
+            font-size: 10pt; /* Base font size */
             background-color: white;
             overflow: hidden;
             color: #000; /* Ensure text is black */
@@ -732,6 +759,31 @@ body {
         document.body.removeChild(tempRenderDiv);
         document.head.removeChild(styleElement);
         pdf.save("backup-codes.pdf");
+      }
+
+      async function loadFontAsBase64(fontUrl) {
+        try {
+          const response = await fetch(fontUrl);
+          if (!response.ok) {
+            throw new Error(
+              `Failed to load font: ${response.statusText} (URL: ${fontUrl})`
+            );
+          }
+          const fontBuffer = await response.arrayBuffer();
+          let binary = "";
+          const bytes = new Uint8Array(fontBuffer);
+          const len = bytes.byteLength;
+          for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          return btoa(binary);
+        } catch (error) {
+          console.error(error);
+          alert(
+            `Error loading font from ${fontUrl}: ${error.message}. PDF might not render special characters correctly.`
+          );
+          return null; // Return null if font loading fails
+        }
       }
 
       renderPrintQueue(); // Initial render of the queue (will show empty message)

@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- html2canvas is often used by jsPDF's html method, ensure it's available if complex rendering is needed -->
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <title>Backup Codes Manager</title>
     <style>
@@ -139,6 +144,41 @@
         id="pdfModeCheckbox"
         style="vertical-align: middle"
       />
+    </div>
+    <div
+      id="testButtonContainer"
+      style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        /* This container is now only for positioning. Styling is moved to the button. */
+        /* No padding, background, border, or shadow here. */
+      "
+    >
+      <button
+        id="testParserBtn"
+        title="Run Parser Tests"
+        style="
+          background: none;
+          cursor: pointer;
+          padding: 0; /* Ensure no internal button padding interferes with icon centering */
+          display: flex;
+          align-items: center; /* Vertical centering */
+          justify-content: center; /* Horizontal centering */
+          width: 38px; /* Desired square size for the button */
+          height: 38px; /* Desired square size for the button */
+          background: white; /* Moved from container */
+          border: 1px solid #ccc; /* Moved from container */
+          border-radius: 5px; /* Rounded corners for the button itself */
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Moved from container */
+        "
+      >
+        <span class="material-icons" style="font-size: 24px; line-height: 1">
+          science</span
+        >
+        <!-- Removed transform for now, flexbox should center the 24px icon in 38px button -->
+      </button>
     </div>
 
     <div id="rawSection">
@@ -368,8 +408,19 @@
             service = t;
           }
         });
-        if (!dateText) dateText = new Date().toLocaleDateString();
-        return { service, login, note: note.trim(), date: dateText, codes };
+        let dateGenerated = false;
+        if (!dateText) {
+          dateText = new Date().toLocaleDateString();
+          dateGenerated = true;
+        }
+        return {
+          service,
+          login,
+          note: note.trim(),
+          date: dateText,
+          codes,
+          dateGenerated,
+        };
       }
       document.getElementById("parseBtn").addEventListener("click", () => {
         const raw = document.getElementById("rawInput").value;
@@ -1039,6 +1090,128 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
       }
 
       renderPrintQueue();
+
+      // --- Parser Test Logic ---
+      function areArraysEqual(arr1, arr2) {
+        if (arr1 === arr2) return true;
+        if (arr1 == null || arr2 == null) return false;
+        if (!Array.isArray(arr1) || !Array.isArray(arr2)) return false;
+        if (arr1.length !== arr2.length) return false;
+
+        for (let i = 0; i < arr1.length; i++) {
+          if (arr1[i] !== arr2[i]) return false;
+        }
+        return true;
+      }
+
+      async function runSingleParserTest(filePath) {
+        try {
+          const response = await fetch(filePath);
+          if (!response.ok) {
+            throw new Error(`HTTP error ${response.status}`);
+          }
+          const testData = await response.json();
+
+          if (typeof testData.originalRawInput === "undefined") {
+            throw new Error("Test JSON missing 'originalRawInput' field.");
+          }
+
+          const parsedOutput = parseRaw(testData.originalRawInput);
+
+          const expected = {
+            service: testData.serviceName,
+            login: testData.login,
+            codes: testData.codes,
+            note: testData.note,
+            date: testData.date,
+          };
+
+          const mismatches = [];
+
+          if (parsedOutput.service !== expected.service) {
+            mismatches.push(
+              `  - Service: Expected "${expected.service}", Got "${parsedOutput.service}"`
+            );
+          }
+          if (parsedOutput.login !== expected.login) {
+            mismatches.push(
+              `  - Login: Expected "${expected.login}", Got "${parsedOutput.login}"`
+            );
+          }
+          if (!areArraysEqual(parsedOutput.codes, expected.codes)) {
+            mismatches.push(
+              `  - Codes: Expected ${JSON.stringify(
+                expected.codes
+              )}, Got ${JSON.stringify(parsedOutput.codes)}`
+            );
+          }
+          if (parsedOutput.note !== expected.note) {
+            // parseRaw trims note, so expected.note should be trimmed version
+            mismatches.push(
+              `  - Note: Expected "${expected.note}", Got "${parsedOutput.note}"`
+            );
+          }
+          // Only test the date if it was NOT artificially generated by parseRaw
+          if (!parsedOutput.dateGenerated) {
+            if (parsedOutput.date !== expected.date) {
+              mismatches.push(
+                `  - Date: Expected "${expected.date}", Got "${parsedOutput.date}"`
+              );
+            }
+          } else {
+            // If dateGenerated is true, we skip the date comparison as requested.
+          }
+
+          if (mismatches.length > 0) {
+            return {
+              fileName: filePath.split("/").pop(),
+              status: "FAIL",
+              details: mismatches.join("\n"),
+            };
+          } else {
+            return { fileName: filePath.split("/").pop(), status: "PASS" };
+          }
+        } catch (error) {
+          return {
+            fileName: filePath.split("/").pop(),
+            status: "ERROR",
+            error: error.message,
+          };
+        }
+      }
+
+      document
+        .getElementById("testParserBtn")
+        .addEventListener("click", async () => {
+          const testFiles = [
+            "./tests/test1.json",
+            "./tests/test2.json",
+            "./tests/test3.json",
+          ];
+          let alertMessage = "Parser Test Results:\n\n";
+
+          const results = await Promise.all(
+            testFiles.map((file) => runSingleParserTest(file))
+          );
+
+          results.forEach((result) => {
+            alertMessage += `Test File: ${result.fileName}\n`;
+            alertMessage += `Status: ${result.status}\n`;
+            if (result.status === "FAIL") {
+              alertMessage += `Mismatched fields:\n${result.details}\n`;
+            } else if (result.status === "ERROR") {
+              alertMessage += `Error: ${result.error}\n`;
+            }
+            alertMessage += "\n";
+          });
+
+          // Check if any test files were attempted
+          if (testFiles.length === 0) {
+            alertMessage = "No test files configured.";
+          }
+
+          alert(alertMessage);
+        });
     </script>
   </body>
 </html>

@@ -1,0 +1,18 @@
+{
+  "serviceName": "ZAPISZ KODY ZAPASOWE",
+  "login": "example@gmail.com",
+  "codes": [
+    "UŻYTY",
+    "1234 5678",
+    "1234 5678",
+    "1234 5678",
+    "1234 5678",
+    "1234 5678",
+    "1234 5678",
+    "1234 5678",
+    "UŻYTY"
+  ],
+  "note": "Każdego kodu zapasowego możesz użyć tylko raz. Potrzebujesz więcej? Wejdź na https://g.co/2sv",
+  "date": "21 sie 2024.",
+  "originalRawInput": "ZAPISZ KODY ZAPASOWE\nPrzechowuj te kody zapasowe w miejscu bezpiecznym, ale dostępnym.\n\n1. JUŻ UŻYTY\t\t 6. 1234 5678\n2. 1234 5678\t\t 7. 1234 5678\n3. 1234 5678\t\t 8. 1234 5678\n4. 1234 5678\t\t 9. 1234 5678\n5. JUŻ UŻYTY\t\t10. JUŻ UŻYTY\n\n(example@gmail.com)\n\n* Każdego kodu zapasowego możesz użyć tylko raz.\n* Potrzebujesz więcej? Wejdź na https://g.co/2sv\n* Te kody wygenerowano: 21 sie 2024."
+}

@@ -102,6 +102,16 @@
         margin-bottom: 12px;
         display: block;
       }
+      .app-menu-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        display: flex; /* For aligning icon and text */
+        align-items: center;
+        font-size: 0.9em;
+      }
+      .app-menu-item:hover {
+        background-color: #f0f0f0;
+      }
       @media print {
         body {
           margin: 0;
@@ -122,62 +132,70 @@
   </head>
   <body>
     <h1>Backup 2FA Codes Manager</h1>
+
+    <!-- New Menu Button and Pop-up Menu -->
     <div
-      id="pdfModeToggleContainer"
-      style="
-        position: fixed;
-        top: 10px;
-        right: 20px;
-        z-index: 1000;
-        background: white;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      "
+      id="appMenuContainer"
+      style="position: fixed; bottom: 20px; right: 20px; z-index: 1000"
     >
-      <label for="pdfModeCheckbox" style="margin-right: 5px; font-size: 0.9em"
-        >PDF Mode:</label
-      >
-      <input
-        type="checkbox"
-        id="pdfModeCheckbox"
-        style="vertical-align: middle"
-      />
-    </div>
-    <div
-      id="testButtonContainer"
-      style="
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 1000;
-        /* This container is now only for positioning. Styling is moved to the button. */
-        /* No padding, background, border, or shadow here. */
-      "
-    >
-      <button
-        id="testParserBtn"
-        title="Run Parser Tests"
+      <!-- Menu items, initially hidden, positioned above the button -->
+      <div
+        id="appMenuItems"
         style="
-          background: none;
-          cursor: pointer;
-          padding: 0; /* Ensure no internal button padding interferes with icon centering */
-          display: flex;
-          align-items: center; /* Vertical centering */
-          justify-content: center; /* Horizontal centering */
-          width: 38px; /* Desired square size for the button */
-          height: 38px; /* Desired square size for the button */
-          background: white; /* Moved from container */
-          border: 1px solid #ccc; /* Moved from container */
-          border-radius: 5px; /* Rounded corners for the button itself */
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Moved from container */
+          display: none;
+          position: absolute;
+          bottom: 100%; /* Position above the button */
+          right: 0; /* Align with the right of the button */
+          margin-bottom: 8px; /* Space between menu and button */
+          background: white;
+          border: 1px solid #ccc;
+          border-radius: 5px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+          padding: 5px 0;
+          min-width: 160px; /* Ensure menu has some width */
         "
       >
-        <span class="material-icons" style="font-size: 24px; line-height: 1">
-          science</span
-        >
-        <!-- Removed transform for now, flexbox should center the 24px icon in 38px button -->
+        <div class="app-menu-item" id="menuItemTestParser">
+          <span
+            class="material-icons"
+            style="font-size: 20px; vertical-align: middle; margin-right: 8px"
+            >science</span
+          >
+          Test Parser
+        </div>
+        <div class="app-menu-item">
+          <input
+            type="checkbox"
+            id="menuPdfModeCheckbox"
+            style="margin-right: 8px; vertical-align: middle"
+          />
+          <label
+            for="menuPdfModeCheckbox"
+            style="vertical-align: middle; cursor: pointer"
+            >PDF Mode</label
+          >
+        </div>
+      </div>
+
+      <!-- The actual menu button -->
+      <button
+        id="mainMenuBtn"
+        title="Menu"
+        style="
+          cursor: pointer;
+          padding: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 38px; /* Same size as old test button */
+          height: 38px; /* Same size as old test button */
+          background: white;
+          border: 1px solid #ccc;
+          border-radius: 5px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        "
+      >
+        <span class="material-icons" style="font-size: 24px">menu</span>
       </button>
     </div>
 
@@ -280,14 +298,6 @@
       ];
 
       let pdfModeActive = true; // Default to true
-      document
-        .getElementById("pdfModeCheckbox")
-        .addEventListener("change", function (event) {
-          pdfModeActive = event.target.checked;
-        });
-      // Ensure the checkbox reflects the default state on load
-      document.getElementById("pdfModeCheckbox").checked = pdfModeActive;
-
       // Style for the file input label to look like a button
       const style = document.createElement("style");
       style.innerHTML = `
@@ -1215,6 +1225,51 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
 
       renderPrintQueue();
 
+      // --- New Menu Logic ---
+      const mainMenuBtn = document.getElementById("mainMenuBtn");
+      const appMenuItems = document.getElementById("appMenuItems");
+      const menuItemTestParser = document.getElementById("menuItemTestParser");
+      const menuPdfModeCheckbox = document.getElementById(
+        "menuPdfModeCheckbox"
+      );
+
+      // Initialize PDF Mode from the menu checkbox
+      // pdfModeActive is already defined and defaulted to true earlier
+      menuPdfModeCheckbox.checked = pdfModeActive;
+      menuPdfModeCheckbox.addEventListener("change", function (event) {
+        pdfModeActive = event.target.checked;
+      });
+
+      mainMenuBtn.addEventListener("click", (event) => {
+        event.stopPropagation(); // Prevent click from immediately closing menu if body listener is active
+        const isMenuOpen = appMenuItems.style.display === "block";
+        appMenuItems.style.display = isMenuOpen ? "none" : "block";
+      });
+
+      // Test Parser functionality (triggered from menu)
+      menuItemTestParser.addEventListener("click", async () => {
+        appMenuItems.style.display = "none"; // Hide menu after click
+        await runParserTests(); // Call the refactored function
+      });
+
+      // Click outside to close menu
+      document.addEventListener("click", (event) => {
+        if (
+          appMenuItems.style.display === "block" &&
+          !mainMenuBtn.contains(event.target) &&
+          !appMenuItems.contains(event.target)
+        ) {
+          appMenuItems.style.display = "none";
+        }
+      });
+      // --- End New Menu Logic ---
+
+      // Ensure the old standalone PDF mode checkbox (if any element with that ID still exists by mistake)
+      // does not interfere. The new one is menuPdfModeCheckbox.
+      // const oldPdfCheckbox = document.getElementById("pdfModeCheckbox");
+      // if (oldPdfCheckbox && oldPdfCheckbox !== menuPdfModeCheckbox) {
+      //   oldPdfCheckbox.removeEventListener("change", ...); // Or ensure it's removed from HTML
+      // }
       // --- Parser Test Logic ---
       function areArraysEqual(arr1, arr2) {
         if (arr1 === arr2) return true;
@@ -1304,38 +1359,34 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
         }
       }
 
-      document
-        .getElementById("testParserBtn")
-        .addEventListener("click", async () => {
-          const testFiles = [
-            "./tests/test1.json",
-            "./tests/test2.json",
-            "./tests/test3.json",
-          ];
-          let alertMessage = "Parser Test Results:\n\n";
+      // Refactored function to run parser tests
+      async function runParserTests() {
+        const testFiles = [
+          "./tests/test1.json",
+          "./tests/test2.json",
+          "./tests/test3.json",
+        ];
+        let alertMessage = "Parser Test Results:\n\n";
 
-          const results = await Promise.all(
-            testFiles.map((file) => runSingleParserTest(file))
-          );
+        const results = await Promise.all(
+          testFiles.map((file) => runSingleParserTest(file))
+        );
 
-          results.forEach((result) => {
-            alertMessage += `Test File: ${result.fileName}\n`;
-            alertMessage += `Status: ${result.status}\n`;
-            if (result.status === "FAIL") {
-              alertMessage += `Mismatched fields:\n${result.details}\n`;
-            } else if (result.status === "ERROR") {
-              alertMessage += `Error: ${result.error}\n`;
-            }
-            alertMessage += "\n";
-          });
-
-          // Check if any test files were attempted
-          if (testFiles.length === 0) {
-            alertMessage = "No test files configured.";
+        results.forEach((result) => {
+          alertMessage += `Test File: ${result.fileName}\n`;
+          alertMessage += `Status: ${result.status}\n`;
+          if (result.status === "FAIL") {
+            alertMessage += `Mismatched fields:\n${result.details}\n`;
+          } else if (result.status === "ERROR") {
+            alertMessage += `Error: ${result.error}\n`;
           }
-
-          alert(alertMessage);
+          alertMessage += "\n";
         });
+        if (testFiles.length === 0) {
+          alertMessage = "No test files configured.";
+        }
+        alert(alertMessage);
+      }
     </script>
   </body>
 </html>

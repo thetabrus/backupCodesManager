@@ -919,8 +919,7 @@ Generated on 23.03.2304</textarea
             item.codes.length
           } codes)`;
           const removeBtn = document.createElement("button");
-          removeBtn.textContent = "Remove";
-          removeBtn.style.marginLeft = "10px";
+          removeBtn.textContent = "✖";
           removeBtn.onclick = () => {
             printQueue = printQueue.filter((i) => i.id !== item.id);
             renderPrintQueue();

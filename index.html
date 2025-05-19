@@ -13,7 +13,7 @@
     <title>Backup Codes Manager</title>
     <style>
       :root {
-        --m3-primary: #00677f; /* Deep teal/blue */
+        --m3-primary: #00677f;
         --m3-on-primary: #ffffff;
         --m3-primary-container: #bee9ff;
         --m3-on-primary-container: #001f28;
@@ -186,7 +186,7 @@
         font-size: 1.1rem;
         color: var(--m3-on-surface-variant);
         margin-top: var(--m3-spacing-l);
-        margin-bottom: var(--m3-spacing-s); /* Space before input */
+        margin-bottom: var(--m3-spacing-s);
       }
       .section-header input[type="checkbox"],
       .master-check input[type="checkbox"],
@@ -250,7 +250,7 @@
       .master-check {
         display: flex;
         align-items: center;
-        margin: var(--m3-spacing-l) 0; /* More space around master check */
+        margin: var(--m3-spacing-l) 0;
         font-weight: 500;
       }
 
@@ -340,16 +340,12 @@
         border-color: var(--m3-secondary);
       }
       .error {
-        color: var(--m3-on-error-container); /* Text color for error messages */
-        background-color: var(
-          --m3-error-container
-        ); /* Background for error messages */
-        padding: var(--m3-spacing-s) var(--m3-spacing-m); /* Padding within error messages */
-        border-radius: var(
-          --m3-border-radius-m
-        ); /* Rounded corners for error messages */
-        margin-bottom: var(--m3-spacing-m); /* Space below error messages */
-        font-weight: 500; /* Medium weight for error text */
+        color: var(--m3-on-error-container);
+        background-color: var(--m3-error-container);
+        padding: var(--m3-spacing-s) var(--m3-spacing-m);
+        border-radius: var(--m3-border-radius-m);
+        margin-bottom: var(--m3-spacing-m);
+        font-weight: 500;
         display: none;
       }
       #rawInputError {
@@ -441,7 +437,6 @@
         clear: both;
       }
 
-      /* Clear the float for Print Data legend (targets the first .section-header) */
       #printDataSection legend + .section-header {
         clear: both;
       }
@@ -605,8 +600,8 @@
       `;
       document.head.appendChild(styleSheet);
 
-      const FONT_PATH_GLOBAL = "./NotoSans-Regular.ttf"; // Used by PDF and potentially non-PDF print
-      const FONT_PATH_GLOBAL_BOLD = "./NotoSans-Bold.ttf"; // For bolder service names
+      const FONT_PATH_GLOBAL = "./NotoSans-Regular.ttf";
+      const FONT_PATH_GLOBAL_BOLD = "./NotoSans-Bold.ttf";
 
       const sectionIds = [
         "checkService",
@@ -690,7 +685,7 @@
         });
       const CODE_CANDIDATE_REGEX =
         /(?:(?<=^)|(?<=[^\p{L}\p{N}_]))(?:[\p{L}0-9]\p{M}*){4,}(?:[ -](?:[\p{L}0-9]\p{M}*){4,})*(?:(?=$)|(?=[^\p{L}\p{N}_]))/gu;
-      const SPECIAL_CODE_WORDS = /^(?:UŻYTY|USED|JUŻ UŻYTY)$/i; // Case-insensitive, whole word
+      const SPECIAL_CODE_WORDS = /^(?:UŻYTY|USED|JUŻ UŻYTY)$/i;
 
       function parseRaw(raw) {
         const lines = raw.split(/\r?\n/);
@@ -777,8 +772,8 @@
                 "gi"
               );
               tempRemainder = tempRemainder.replace(codeRegex, "");
-            });
-            tempRemainder = tempRemainder.replace(/\b(?:JUŻ|ALREADY)\b/gi, ""); // Remove "JUŻ" etc.
+            }); // prettier-ignore
+            tempRemainder = tempRemainder.replace(/\b(?:JUŻ|ALREADY)\b/gi, "");
             tempRemainder = tempRemainder.replace(/\d+\.\s*/g, "");
             tempRemainder = tempRemainder.trim().replace(/[.,;:!?]$/, "");
 
@@ -965,10 +960,9 @@
           .map((v) => `<li><input type="checkbox" disabled /> ${v}</li>`)
           .join("");
         const blockStyle =
-          isFirstInPair && isPairOnPage ? 'style="margin-right: 5mm;"' : "";
+          isFirstInPair && isPairOnPage ? 'style="margin-right: 5mm;"' : ""; // prettier-ignore
 
         let html = `<div class="block" ${blockStyle}>`;
-        if (itemData.serviceName) html += `<h2>${itemData.serviceName}</h2>`;
         if (itemData.login) html += `<p><strong>${itemData.login}</strong></p>`;
         if (itemData.date) html += `<p class="date">${itemData.date}</p>`; // Date now here
         if (itemData.codes && itemData.codes.length > 0)
@@ -1292,7 +1286,7 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; }
               pdf.setFontSize(PDF_TITLE_FONT_SIZE_PT);
               const titleMaxWidth = PDF_BLOCK_WIDTH - PDF_BLOCK_PADDING * 2;
               const titleText = String(itemData.serviceName);
-              const titleLineHeightMm =
+              const titleLineHeightMm = // prettier-ignore
                 PDF_TITLE_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
               pdf.text(titleText, itemX + PDF_BLOCK_PADDING, currentY, {
                 maxWidth: titleMaxWidth,
@@ -1314,7 +1308,7 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; }
 
             if (itemData.date) {
               pdf.setFont(pdfFontName, "normal");
-              pdf.setTextColor(85, 85, 85); // #555
+              pdf.setTextColor(85, 85, 85);
               pdf.setFontSize(PDF_DATE_FONT_SIZE_PT);
               const dateText = String(itemData.date);
               const dateLineHeightMm =
@@ -1403,7 +1397,7 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; }
             if (itemData.note) {
               currentY += MARGIN_COMMON_MM;
               pdf.setFont(pdfFontName, "normal");
-              pdf.setTextColor(68, 68, 68); // #444
+              pdf.setTextColor(68, 68, 68);
               pdf.setFontSize(PDF_NOTE_FONT_SIZE_PT);
               const noteSingleLineHeightMm =
                 PDF_NOTE_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
@@ -1489,7 +1483,6 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; }
         await runParserTests();
       });
 
-      // Click outside to close menu
       document.addEventListener("click", (event) => {
         if (
           appMenuItems.style.display === "block" &&
@@ -1553,17 +1546,13 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; }
             );
           }
           if (parsedOutput.note !== expected.note) {
-            // parseRaw trims note, so expected.note should be trimmed version
             mismatches.push(
               `  - Note: Expected "${expected.note}", Got "${parsedOutput.note}"`
             );
           }
           if (!parsedOutput.dateGenerated) {
-            if (parsedOutput.date !== expected.date) {
-              mismatches.push(`  - Date: Expected "${expected.date}", Got "${parsedOutput.date}"`); // prettier-ignore
-            }
+            if (parsedOutput.date !== expected.date) {mismatches.push(`  - Date: Expected "${expected.date}", Got "${parsedOutput.date}"`);} // prettier-ignore
           } else {
-            // If dateGenerated is true, we skip the date comparison as requested.
           }
 
           if (mismatches.length > 0) {

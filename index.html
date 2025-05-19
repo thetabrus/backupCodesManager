@@ -538,7 +538,7 @@ body {
   /* Width will be determined by its content (one or two blocks with their margins) */
 }
 .block {
-  width: 140mm; /* Approx. A5 landscape width */
+  width: 138mm; /* Reduced width to prevent overflow, matches PDF block width */
   height: 190mm; /* Approx. A5 landscape height */
   box-sizing: border-box;
   border: 1px solid #444;
@@ -569,13 +569,16 @@ body {
     padding: 6mm; /* Overall page margin, similar to PDF's x_offset */
     box-sizing: border-box;
     width: 297mm; /* A4 landscape width */
-    height: 210mm; /* A4 landscape height */
+    /* Let height be determined by content + padding, remove fixed height:
+    height: 210mm; */
     display: flex;
     justify-content: flex-start; /* Align block(s) to the left of the padded area */
     align-items: center; /* Vertically center block(s) within the padded area */
+    overflow: hidden; /* Prevent container itself from causing unexpected breaks */
   }
-  .print-page-container:not(:last-of-type) {
-    page-break-after: always; /* Add page break only if it's NOT the last container of its type */
+  /* Changed page break strategy: apply before instead of after */
+  .print-page-container:not(:first-of-type) {
+    page-break-before: always; /* Add page break before each container, except the first one */
   }
   .block {
     margin: 0; /* Reset preview margin, rely on container padding and flex gap */

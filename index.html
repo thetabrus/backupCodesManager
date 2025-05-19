@@ -470,6 +470,30 @@
       #queueStatus {
         display: none;
       }
+      #copyrightNotice {
+        text-align: center;
+        padding: var(--m3-spacing-s) 0;
+        margin-top: var(--m3-spacing-xl);
+      }
+      #copyrightNotice a {
+        display: inline-block;
+        padding: var(--m3-spacing-xs) var(--m3-spacing-m);
+        border-radius: var(--m3-border-radius-m);
+        background-color: var(--m3-surface-variant);
+        color: var(--m3-on-surface-variant);
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: background-color 0.2s ease;
+      }
+      #copyrightNotice a:hover {
+        background-color: color-mix(
+          in srgb,
+          var(--m3-surface-variant) 100%,
+          var(--m3-on-surface-variant) 12%
+        );
+        text-decoration: none;
+      }
 
       @media print {
         body {
@@ -589,6 +613,15 @@ Generated on 23.03.2304</textarea
       <ul id="printQueueList"></ul>
       <p id="queueStatus">Queue is empty.</p>
     </fieldset>
+
+    <div id="copyrightNotice">
+      <a
+        href="https://maciejsaferna.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Copyright 2025 © Maciej Saferna</a
+      >
+    </div>
 
     <script>
       const styleSheet = document.createElement("style");
@@ -1550,7 +1583,9 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; }
           }
           if (!parsedOutput.dateGenerated) {
             if (parsedOutput.date !== expected.date) {
-              mismatches.push(`  - Date: Expected "${expected.date}", Got "${parsedOutput.date}"`); // prettier-ignore
+              mismatches.push(
+                `  - Date: Expected "${expected.date}", Got "${parsedOutput.date}"`
+              );
             }
           } else {
           }

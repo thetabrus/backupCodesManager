@@ -797,16 +797,11 @@ body {
           containerElement.style.width = `${currentPageContentWidth}mm`;
           containerElement.style.height = `${blockNominalHeight}mm`;
 
+          // Calculate the consistent X offset for the content area
+          // This margin is based on fitting two blocks and their interconnecting margin.
+          const x_offset =
+            (pdfPageWidth - (blockNominalWidth * 2 + interBlockMargin)) / 2;
           const y_offset = (pdfPageHeight - blockNominalHeight) / 2;
-          let x_offset;
-
-          if (blocksOnThisPage === 1) {
-            // Center the single block within the left half of the page
-            x_offset = (pdfPageWidth / 2 - blockNominalWidth) / 2;
-          } else {
-            // For two blocks, center them across the full page width
-            x_offset = (pdfPageWidth - currentPageContentWidth) / 2;
-          }
 
           // Use html2canvas directly to render the element to a canvas
           const canvas = await html2canvas(containerElement, {

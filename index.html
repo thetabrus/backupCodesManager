@@ -534,6 +534,24 @@
           }
 
           const win = window.open("", "_blank");
+          // Script to be injected into the new window.
+          // It waits for fonts to be ready before printing.
+          const injectedScript = `
+            async function printWhenReady() {
+              try {
+                // Wait for all fonts specified in @font-face rules to be loaded and ready.
+                await document.fonts.ready;
+                // console.log('Fonts are ready, initiating print.');
+                window.print();
+              } catch (error) {
+                console.error('Error waiting for fonts, printing anyway:', error);
+                window.print(); // Fallback to print immediately if font check fails.
+              }
+            }
+
+            // Call printWhenReady after the DOM is fully loaded.
+            window.onload = printWhenReady;
+          `;
           win.document.write(
             `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Print Codes</title><style>
 @font-face {
@@ -631,8 +649,9 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
     margin-right: 5mm; /* Space between the two blocks */
   }
 }
-</style></head><body>${allBlocksHtml}<script>window.print()<\/script></body></html>`
+</style></head><body>${allBlocksHtml}<script>${injectedScript}<\/script></body></html>`
           );
+          win.document.close(); // Call close after writing content
         });
       document
         .getElementById("downloadJsonBtn")

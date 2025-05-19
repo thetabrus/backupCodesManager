@@ -14,6 +14,62 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <title>Backup Codes Manager</title>
     <style>
+      :root {
+        --m3-primary: #00677f; /* Deep teal/blue */
+        --m3-on-primary: #ffffff;
+        --m3-primary-container: #bee9ff;
+        --m3-on-primary-container: #001f28;
+
+        --m3-secondary: #4e626a;
+        --m3-on-secondary: #ffffff;
+        --m3-secondary-container: #d1e6ee;
+        --m3-on-secondary-container: #091f26;
+
+        --m3-tertiary: #5e5b7d;
+        --m3-on-tertiary: #ffffff;
+        --m3-tertiary-container: #e4dfff;
+        --m3-on-tertiary-container: #1a1836;
+
+        --m3-error: #ba1a1a;
+        --m3-on-error: #ffffff;
+        --m3-error-container: #ffdad6;
+        --m3-on-error-container: #410002;
+
+        --m3-background: #f7fcff; /* Page background */
+        --m3-on-background: #171d1f; /* Main text color */
+
+        --m3-surface: #ffffff; /* Card backgrounds, inputs */
+        --m3-on-surface: #171d1f;
+        --m3-surface-variant: #dbe4e8; /* Slightly different surface, e.g. disabled, subtle backgrounds */
+        --m3-on-surface-variant: #40484c; /* Text on variant surface */
+
+        --m3-outline: #70787c; /* Borders */
+        --m3-shadow-color: rgba(0, 0, 0, 0.1);
+        --m3-shadow-elevation-1: 0 1px 2px 0 var(--m3-shadow-color),
+          0 1px 3px 0 var(--m3-shadow-color);
+        --m3-shadow-elevation-2: 0 2px 4px -1px var(--m3-shadow-color),
+          0 4px 5px 0 var(--m3-shadow-color);
+        --m3-shadow-elevation-3: 0 4px 6px -2px var(--m3-shadow-color),
+          0 6px 10px 0 var(--m3-shadow-color);
+
+        --m3-border-radius-s: 4px;
+        --m3-border-radius-m: 8px;
+        --m3-border-radius-l: 16px;
+        --m3-border-radius-xl: 28px;
+
+        --m3-spacing-xs: 4px;
+        --m3-spacing-s: 8px;
+        --m3-spacing-m: 16px;
+        --m3-spacing-l: 24px;
+        --m3-spacing-xl: 32px;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
       @font-face {
         font-family: "NotoSansUnicode";
         src: url("./NotoSans-Regular.ttf") format("truetype");
@@ -22,100 +78,419 @@
       }
       @font-face {
         font-family: "NotoSansUnicode";
-        src: url("./NotoSans-Bold.ttf") format("truetype"); /* Assuming you have a NotoSans-Bold.ttf */
+        src: url("./NotoSans-Bold.ttf") format("truetype");
         font-weight: bold;
         font-style: normal;
       }
       body {
-        font-family: "NotoSansUnicode", sans-serif;
-        margin: 20px;
+        font-family: "NotoSansUnicode", -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji",
+          "Segoe UI Emoji", "Segoe UI Symbol";
+        margin: 0;
+        padding: var(--m3-spacing-l);
+        background-color: var(--m3-background);
+        color: var(--m3-on-background);
+        line-height: 1.6;
       }
+
+      /* Apply max-width to main content sections for better readability on wide screens */
+      body > h1,
+      #rawSection,
+      #editForm,
+      #printQueueSection {
+        width: 100%;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: var(--m3-spacing-l);
+      }
+
+      h1 {
+        font-size: 2.25rem; /* 36px */
+        font-weight: 700;
+        color: var(--m3-primary);
+        margin-bottom: var(--m3-spacing-xl);
+        text-align: center;
+      }
+
       textarea,
       input,
       button,
       fieldset {
-        font-family: inherit; /* Inherit NotoSansUnicode from body */
+        font-family: inherit;
       }
+
       textarea {
         width: 100%;
-        height: 150px;
-        margin-bottom: 10px;
+        min-height: 150px;
+        margin-bottom: var(--m3-spacing-m);
+        padding: var(--m3-spacing-m);
+        border: 1px solid var(--m3-outline);
+        border-radius: var(--m3-border-radius-m);
+        background-color: var(--m3-surface);
+        color: var(--m3-on-surface);
+        font-size: 1rem;
+        line-height: 1.5;
+        transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
       }
-      fieldset {
-        margin: 10px 0;
-        padding: 10px;
-        border: 1px solid #ccc;
+      textarea:focus {
+        outline: none;
+        border-color: var(--m3-primary);
+        box-shadow: 0 0 0 2px var(--m3-primary-container);
       }
+
+      /* Card styling for sections */
+      fieldset,
+      #rawSection {
+        /* Apply card style to #rawSection as well */
+        padding: var(--m3-spacing-l); /* Uniform padding inside the card */
+        background-color: var(--m3-surface);
+        border: none; /* Remove default fieldset border */
+        border-radius: var(--m3-border-radius-l);
+        margin: 0 auto var(--m3-spacing-l) auto; /* Centered with bottom margin */
+        box-shadow: var(--m3-shadow-elevation-1);
+      }
+      #rawSection > p {
+        /* Style for the instruction text in rawSection */
+        margin-top: 0;
+        margin-bottom: var(--m3-spacing-m);
+        font-size: 1.1rem;
+        color: var(--m3-on-surface-variant);
+      }
+
+      legend {
+        font-size: 1.5rem; /* 24px */
+        font-weight: 600;
+        color: var(--m3-on-surface-variant);
+        /* Add small horizontal padding to inset the text slightly */
+        padding-left: var(--m3-spacing-xs);
+        padding-right: var(--m3-spacing-xs);
+        padding-bottom: var(--m3-spacing-s); /* Space for border */
+        margin-left: 0;
+        margin-right: 0;
+        margin-bottom: var(--m3-spacing-l);
+        border-bottom: 1px solid var(--m3-surface-variant);
+        width: 100%; /* Make legend span full width of fieldset padding box */
+        display: block; /* Ensure it behaves as a block for width */
+        box-sizing: border-box; /* Be explicit to ensure padding is handled as expected */
+      }
+
       .section-header {
         display: flex;
         align-items: center;
-        font-weight: bold;
-        margin-top: 16px;
+        font-weight: 500; /* Medium weight */
+        font-size: 1.1rem;
+        color: var(--m3-on-surface-variant);
+        margin-top: var(--m3-spacing-l);
+        margin-bottom: var(--m3-spacing-s); /* Space before input */
       }
-      .section-header input[type="checkbox"] {
-        margin-right: 8px;
+      .section-header input[type="checkbox"],
+      .master-check input[type="checkbox"],
+      .code-item input[type="checkbox"],
+      #menuPdfModeCheckbox {
+        margin-right: var(--m3-spacing-s);
+        width: 20px;
+        height: 20px;
+        accent-color: var(--m3-primary);
+        cursor: pointer;
+        flex-shrink: 0;
       }
+      .section-header label,
+      .master-check label,
+      .code-item label,
+      label[for="menuPdfModeCheckbox"] {
+        font-size: 1rem;
+        color: var(--m3-on-surface);
+        cursor: pointer;
+      }
+
       input[type="text"] {
         width: 100%;
-        padding: 5px;
-        box-sizing: border-box;
-        margin-bottom: 8px;
+        padding: var(--m3-spacing-m);
+        margin-bottom: var(--m3-spacing-m);
+        border: 1px solid var(--m3-outline);
+        border-radius: var(--m3-border-radius-m);
+        background-color: var(--m3-surface);
+        color: var(--m3-on-surface);
+        font-size: 1rem;
+        transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
       }
+      input[type="text"]:focus {
+        outline: none;
+        border-color: var(--m3-primary);
+        box-shadow: 0 0 0 2px var(--m3-primary-container);
+      }
+
       .codes-container {
-        margin: 8px 0;
+        margin: var(--m3-spacing-m) 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--m3-spacing-s);
       }
+
       .code-item {
         display: flex;
         align-items: center;
-        margin: 4px 0;
+        gap: var(--m3-spacing-s);
+        background-color: var(--m3-surface-variant);
+        padding: var(--m3-spacing-s);
+        border-radius: var(--m3-border-radius-m);
       }
-      .code-item input[type="checkbox"] {
-        margin-right: 8px;
-      }
+
       .code-item input[type="text"] {
         flex: 1;
-        padding: 4px;
-        margin-right: 8px;
+        margin-bottom: 0; /* Handled by gap in .code-item */
+        background-color: var(--m3-surface); /* Input stands out on item bg */
       }
-      .code-item button {
-        padding: 4px 8px;
-      }
-      #addCodeBtn {
-        margin: 8px 0;
-      }
+
       .master-check {
         display: flex;
         align-items: center;
-        margin: 16px 0;
-        font-weight: bold;
+        margin: var(--m3-spacing-l) 0; /* More space around master check */
+        font-weight: 500;
       }
-      .master-check input[type="checkbox"] {
-        margin-right: 8px;
-      }
-      button {
-        padding: 8px 16px;
-        margin-right: 10px;
+
+      button,
+      .button-like-label {
+        padding: var(--m3-spacing-s) var(--m3-spacing-m);
         font-size: 1rem;
+        border-radius: var(
+          --m3-border-radius-xl
+        ); /* Pill shape or large radius */
         cursor: pointer;
-      }
-      .error {
-        color: red;
-        margin-bottom: 12px;
-        display: block;
-      }
-      .app-menu-item {
-        padding: 8px 12px;
-        cursor: pointer;
-        display: flex; /* For aligning icon and text */
+        border: none;
+        font-weight: 500;
+        line-height: normal; /* Ensure consistent line height */
+        transition: background-color 0.2s ease, box-shadow 0.2s ease,
+          filter 0.2s ease;
+        text-align: center;
+        display: inline-flex;
         align-items: center;
-        font-size: 0.9em;
+        justify-content: center;
+        gap: var(--m3-spacing-s);
+        margin-right: var(
+          --m3-spacing-s
+        ); /* Default margin for buttons in a row */
+        margin-bottom: var(--m3-spacing-s); /* For wrapping */
+      }
+      button:last-child,
+      .button-like-label:last-child {
+        margin-right: 0;
+      }
+
+      /* Primary Button Style */
+      button#parseBtn,
+      button#addToQueueBtn,
+      button#printAllQueuedBtn {
+        background-color: var(--m3-primary);
+        color: var(--m3-on-primary);
+      }
+      button#parseBtn:hover,
+      button#addToQueueBtn:hover,
+      button#printAllQueuedBtn:hover {
+        filter: brightness(0.9);
+        box-shadow: var(--m3-shadow-elevation-1);
+      }
+
+      /* Secondary/Outlined Button Style */
+      button#downloadJsonBtn,
+      button#clearQueueBtn,
+      button#cancelBtn {
+        background-color: var(--m3-surface-variant);
+        color: var(--m3-on-surface-variant);
+        border: 1px solid var(--m3-outline);
+      }
+      button#downloadJsonBtn:hover,
+      button#clearQueueBtn:hover,
+      button#cancelBtn:hover {
+        background-color: var(--m3-secondary-container);
+        color: var(--m3-on-secondary-container);
+        border-color: var(--m3-secondary);
+      }
+
+      /* Tertiary/Special Action Button Style */
+      button#addCodeBtn {
+        background-color: var(--m3-tertiary-container);
+        color: var(--m3-on-tertiary-container);
+        padding: var(--m3-spacing-s) var(--m3-spacing-m);
+        margin: var(--m3-spacing-m) 0; /* Give it some vertical space */
+      }
+      button#addCodeBtn:hover {
+        filter: brightness(0.9);
+      }
+
+      .code-item button {
+        /* Delete code button '✖' */
+        padding: var(--m3-spacing-xs) var(--m3-spacing-s);
+        min-width: auto;
+        border-radius: var(--m3-border-radius-s);
+        background-color: var(--m3-error-container);
+        color: var(--m3-on-error-container);
+        border: none;
+        margin-right: 0; /* No extra margin */
+      }
+      .code-item button:hover {
+        filter: brightness(0.9);
+      }
+
+      .button-like-label {
+        /* For Upload JSON */
+        background-color: var(--m3-surface-variant);
+        color: var(
+          --m3-on-surface-variant
+        ); /* Match secondary button text color */
+        /* Ensure padding matches other buttons, already handled by shared rule */
+        border: 1px solid var(--m3-outline);
+        /* line-height and vertical-align also handled by shared rule or flex alignment */
+      }
+      .button-like-label:hover {
+        /* Matches hover of other secondary/outlined buttons */
+        background-color: var(--m3-secondary-container);
+        color: var(
+          --m3-on-secondary-container
+        ); /* Match secondary button hover text color */
+        border-color: var(--m3-secondary);
+      }
+      /* Explicitly hide error message by default */
+      .error {
+        color: var(--m3-on-error-container);
+        background-color: var(--m3-error-container);
+        padding: var(--m3-spacing-s) var(--m3-spacing-m);
+        border-radius: var(--m3-border-radius-m);
+        margin-bottom: var(--m3-spacing-m);
+        display: block; /* Keep this */
+        font-weight: 500; /* Medium weight */
+        display: none; /* Hide by default */
+      }
+      #rawInputError {
+        margin-top: var(--m3-spacing-s); /* Space below textarea */
+      }
+
+      /* FAB Menu */
+      #appMenuContainer {
+        position: fixed;
+        bottom: var(--m3-spacing-l);
+        right: var(--m3-spacing-l);
+        z-index: 1000;
+      }
+      #mainMenuBtn {
+        /* FAB */
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
+        background: var(--m3-secondary-container);
+        color: var(--m3-on-secondary-container);
+        border: none;
+        border-radius: var(
+          --m3-border-radius-l
+        ); /* M3 FABs often more squarish-rounded */
+        box-shadow: var(--m3-shadow-elevation-3);
+        transition: transform 0.2s ease-out, box-shadow 0.2s ease-out,
+          background-color 0.2s ease;
+        margin: 0; /* Reset margin from general button style */
+      }
+      #mainMenuBtn:hover {
+        transform: scale(1.05);
+        background-color: color-mix(
+          in srgb,
+          var(--m3-secondary-container) 90%,
+          black
+        );
+      }
+      #mainMenuBtn .material-icons {
+        font-size: 28px;
+      }
+
+      #appMenuItems {
+        position: absolute;
+        bottom: calc(100% + var(--m3-spacing-s));
+        right: 0;
+        background: var(--m3-surface);
+        border: 1px solid var(--m3-surface-variant);
+        border-radius: var(--m3-border-radius-m);
+        box-shadow: var(--m3-shadow-elevation-2);
+        padding: var(--m3-spacing-s) 0;
+        min-width: 220px; /* Wider menu */
+        z-index: 1001;
+      }
+
+      .app-menu-item {
+        padding: var(--m3-spacing-s) var(--m3-spacing-m);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        font-size: 1rem;
+        color: var(--m3-on-surface);
+        gap: var(--m3-spacing-m); /* Increased gap */
+        transition: background-color 0.15s ease;
       }
       .app-menu-item:hover {
-        background-color: #f0f0f0;
+        background-color: var(--m3-surface-variant);
       }
+      .app-menu-item .material-icons {
+        font-size: 22px;
+        color: var(--m3-on-surface-variant);
+      }
+
+      /* Print Queue Section */
+      #printQueueSection legend {
+        margin-bottom: var(--m3-spacing-l);
+      }
+      #queueControls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--m3-spacing-m);
+        margin-bottom: var(--m3-spacing-l);
+        align-items: center;
+      }
+      #printQueueList {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 var(--m3-spacing-l) 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--m3-spacing-s);
+      }
+      #printQueueList li {
+        background-color: var(--m3-surface-variant);
+        padding: var(--m3-spacing-m);
+        border-radius: var(--m3-border-radius-m);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--m3-on-surface-variant);
+        font-size: 1rem;
+      }
+      #printQueueList li button {
+        /* Remove button in list item */
+        margin-left: var(--m3-spacing-m);
+        background-color: var(--m3-error-container);
+        color: var(--m3-on-error-container);
+        border: none;
+        padding: var(--m3-spacing-xs) var(--m3-spacing-s);
+        border-radius: var(--m3-border-radius-s);
+      }
+      #printQueueList li button:hover {
+        filter: brightness(0.9);
+      }
+      #queueStatus {
+        color: var(--m3-on-surface-variant); /* Text color */
+        /* font-style: italic; Removed */
+        text-align: center;
+        padding: var(--m3-spacing-m);
+        background-color: var(--m3-surface-variant);
+        border-radius: var(--m3-border-radius-m);
+      }
+
+      /* Print styles - largely untouched but ensure body margin is reset for print */
       @media print {
         body {
           margin: 0;
+          background-color: transparent; /* Ensure no page background color for print */
         }
         .block {
           width: 105mm;
@@ -203,11 +578,7 @@
     <div id="rawSection">
       <p>Paste the raw text with the list of backup codes:</p>
       <textarea id="rawInput" placeholder="Paste raw text..."></textarea>
-      <span
-        id="rawInputError"
-        class="error"
-        style="display: none; margin-bottom: 5px"
-      ></span>
+      <span id="rawInputError" class="error"></span>
       <button id="parseBtn">Parse and Edit</button>
     </div>
     <form id="editForm" style="display: none">
@@ -259,6 +630,7 @@
           >
         </div>
         <span id="errorMsg" class="error"></span>
+        <!-- Removed inline style -->
         <button type="button" id="addToQueueBtn">Add to Print Queue</button>
         <button type="button" id="downloadJsonBtn">Download JSON</button>
         <button type="button" id="cancelBtn">Cancel</button>
@@ -268,6 +640,7 @@
     <fieldset id="printQueueSection">
       <legend>Print Queue</legend>
       <div id="queueControls">
+        <button type="button" id="printAllQueuedBtn">Print All Queued</button>
         <label for="uploadJsonInput" class="button-like-label">
           Upload JSONs to Queue
         </label>
@@ -278,7 +651,6 @@
           accept=".json"
           style="display: none"
         />
-        <button type="button" id="printAllQueuedBtn">Print All Queued</button>
         <button type="button" id="clearQueueBtn">Clear Queue</button>
       </div>
       <ul id="printQueueList">
@@ -299,19 +671,6 @@
       ];
 
       let pdfModeActive = true; // Default to true
-      // Style for the file input label to look like a button
-      const style = document.createElement("style");
-      style.innerHTML = `
-        .button-like-label {
-          padding: 8px 16px;
-          margin-right: 10px;
-          font-size: 1rem;
-          cursor: pointer;
-          background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; display: inline-block;
-        }
-        .button-like-label:hover { background-color: #e0e0e0; }
-      `;
-      document.head.appendChild(style);
 
       function updateCodeMaster() {
         const codeChecks = document.querySelectorAll(".code-check");
@@ -577,6 +936,7 @@
           "checkAllFields",
         ].forEach((id) => (document.getElementById(id).checked = false));
         document.getElementById("errorMsg").textContent = "";
+        document.getElementById("errorMsg").style.display = "none";
         document.getElementById("rawSection").style.display = "none";
         document.getElementById("editForm").style.display = "block";
         bindSectionCheckboxes();
@@ -586,6 +946,7 @@
         document.getElementById("editForm").style.display = "none";
         document.getElementById("rawSection").style.display = "block";
         document.getElementById("errorMsg").textContent = "";
+        document.getElementById("errorMsg").style.display = "none";
         document.getElementById("rawInputError").textContent = "";
         document.getElementById("rawInputError").style.display = "none";
       });
@@ -595,9 +956,11 @@
       function getCurrentFormData() {
         const err = document.getElementById("errorMsg");
         err.textContent = "";
+        err.style.display = "none"; // Hide by default before check
         if (!document.getElementById("checkAllFields").checked) {
           err.textContent =
             "Please confirm that all sections and codes have been checked.";
+          err.style.display = "block"; // Show error
           return null;
         }
         const srv = document.getElementById("serviceInput").value;
@@ -648,6 +1011,7 @@
         const formData = getCurrentFormData();
         if (formData) {
           printQueue.push(formData);
+          document.getElementById("errorMsg").style.display = "none"; // Hide error on success
           renderPrintQueue();
           alert(`"${formData.serviceName || "Item"}" added to print queue.`);
           // Optionally, reset the form or switch view
@@ -843,9 +1207,11 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
         .addEventListener("click", () => {
           const err = document.getElementById("errorMsg");
           err.textContent = ""; // Clear previous errors
+          err.style.display = "none"; // Hide by default
           if (!document.getElementById("checkAllFields").checked) {
             err.textContent =
               "Please confirm that all sections and codes have been checked.";
+            err.style.display = "block"; // Show error
             return;
           }
 

@@ -8,15 +8,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <title>Backup Codes Manager</title>
     <style>
+      @font-face {
+        font-family: "NotoSansUnicode";
+        src: url("./NotoSans-Regular.ttf") format("truetype");
+      }
       body {
-        font-family: sans-serif;
+        font-family: "NotoSansUnicode", sans-serif;
         margin: 20px;
       }
       textarea,
       input,
       button,
       fieldset {
-        font-family: sans-serif;
+        font-family: inherit; /* Inherit NotoSansUnicode from body */
       }
       textarea {
         width: 100%;
@@ -217,6 +221,8 @@
     </fieldset>
 
     <script>
+      const FONT_PATH_GLOBAL = "./NotoSans-Regular.ttf"; // Used by PDF and potentially non-PDF print
+
       const sectionIds = [
         "checkService",
         "checkLogin",
@@ -520,7 +526,7 @@
           const win = window.open("", "_blank");
           win.document.write(
             `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Print Codes</title><style>
-body {
+@font-face { font-family: 'NotoSansUnicode'; src: url('${FONT_PATH_GLOBAL}') format('truetype'); } body {
   font-family: sans-serif;
   margin: 0;
   background-color: #f0f0f0; /* Preview background */
@@ -529,6 +535,7 @@ body {
   align-items: center;
   min-height: 100vh;
 }
+body { font-family: 'NotoSansUnicode', sans-serif; } /* Apply Noto font to non-PDF print view */
 .print-page-container { /* Container for one or two blocks in preview */
   display: flex;
   flex-direction: row;
@@ -539,7 +546,7 @@ body {
 }
 .block {
   width: 138mm; /* Reduced width to prevent overflow, matches PDF block width */
-  height: 190mm; /* Approx. A5 landscape height */
+  height: 190mm; /* Approx. A5 landscape height, matches PDF block height */
   box-sizing: border-box;
   border: 1px solid #444;
   margin: 5mm; /* Spacing for preview */
@@ -548,6 +555,7 @@ body {
   background-color: white; /* White card background for preview */
   box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Subtle shadow for preview */
   overflow: hidden; /* Prevent content spill in preview */
+  font-family: 'NotoSansUnicode', sans-serif; /* Ensure blocks also use Noto */
 }
 .block h2 { font-size: 1.8em; margin-top: 0; margin-bottom: 0.6em; color: #333; font-weight: bold;}
 .block p { font-size: 1em; margin: 0.6em 0; line-height: 1.4; }
@@ -667,10 +675,10 @@ body {
 
       async function generateAndDownloadPdf() {
         // --- Font Embedding Logic ---
-        const fontPath = "./NotoSans-Regular.ttf"; // Path to the font file
+        // const fontPath = "./NotoSans-Regular.ttf"; // Path to the font file - now using FONT_PATH_GLOBAL
         const pdfFontName = "NotoSansUnicode"; // A name for jsPDF and CSS
 
-        let base64Font = await loadFontAsBase64(fontPath);
+        let base64Font = await loadFontAsBase64(FONT_PATH_GLOBAL);
 
         // --- End Font Embedding Logic ---
 
@@ -696,15 +704,15 @@ body {
         });
 
         if (base64Font) {
-          pdf.addFileToVFS(fontPath.split("/").pop(), base64Font); // e.g., 'NotoSans-Regular.ttf'
-          pdf.addFont(fontPath.split("/").pop(), pdfFontName, "normal");
+          pdf.addFileToVFS(FONT_PATH_GLOBAL.split("/").pop(), base64Font); // e.g., 'NotoSans-Regular.ttf'
+          pdf.addFont(FONT_PATH_GLOBAL.split("/").pop(), pdfFontName, "normal");
           pdf.setFont(pdfFontName); // Set this font as active for jsPDF
         }
 
         // CSS for PDF rendering. This needs to be carefully crafted.
         const printCSS = `
-          @font-face { font-family: '${pdfFontName}'; src: url('${fontPath}'); } /* Helps html2canvas find the font */
-          body { font-family: sans-serif; margin: 0; }
+          @font-face { font-family: '${pdfFontName}'; src: url('${FONT_PATH_GLOBAL}'); } /* Helps html2canvas find the font */
+          body { font-family: '${pdfFontName}', sans-serif; margin: 0; } /* Apply Noto to body for PDF rendering context */
           .print-page-container-for-pdf { /* This container will be dynamically sized */
             display: flex;
             justify-content: flex-start; /* Blocks align to the left within this container */
@@ -716,8 +724,8 @@ body {
             font-family: '${
               base64Font ? pdfFontName : "sans-serif"
             }'; /* Use embedded font, fallback to sans-serif */
-            width: 138mm;  /* Slightly reduced width */
-            height: 188mm; /* Slightly reduced height */
+            width: 138mm;  /* Consistent width */
+            height: 190mm; /* Consistent height, was 188mm, changed for consistency */
             box-sizing: border-box;
             border: 1px solid #000;
             /* margin-right is now handled by generateBlockHtml for the first block in a pair */
@@ -757,7 +765,7 @@ body {
 
         const pdfPageWidth = 297; // A4 landscape width in mm
         const pdfPageHeight = 210; // A4 landscape height in mm
-        const blockNominalHeight = 188; // mm - Updated to match CSS
+        const blockNominalHeight = 190; // mm - Updated to match CSS (was 188mm)
         const blockNominalWidth = 138; // mm - Updated to match CSS
         const interBlockMargin = 5; // mm
         const scaleFactor = 96 / 25.4; // Approx pixels per mm for html2canvas windowWidth/Height

@@ -500,12 +500,16 @@
         const blockStyle =
           isFirstInPair && isPairOnPage ? 'style="margin-right: 5mm;"' : "";
 
-        return `<div class="block" ${blockStyle}><h2>${
-          itemData.serviceName
-        }</h2><p><strong>${itemData.login}</strong></p><ul>${codesHtml}</ul>${
-          // h2 will use font-weight: bold from CSS
-          itemData.note ? `<p><em>${itemData.note}</em></p>` : ""
-        }<p class="date">${itemData.date}</p></div>`;
+        // New layout order for non-PDF (about:blank)
+        let html = `<div class="block" ${blockStyle}>`;
+        if (itemData.serviceName) html += `<h2>${itemData.serviceName}</h2>`;
+        if (itemData.login) html += `<p><strong>${itemData.login}</strong></p>`;
+        if (itemData.date) html += `<p class="date">${itemData.date}</p>`; // Date now here
+        if (itemData.codes && itemData.codes.length > 0)
+          html += `<ul>${codesHtml}</ul>`;
+        if (itemData.note) html += `<p><em>${itemData.note}</em></p>`; // Note is last
+        html += `</div>`;
+        return html;
       }
 
       document
@@ -608,9 +612,12 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
 .block li input[type="checkbox"] {
   width: 3mm; /* Match PDF checkbox size */
   height: 3mm; /* Match PDF checkbox size */
-  margin-right: 1.5mm; /* Match PDF checkbox text gap */
+  margin-right: 1.5mm; /* Match PDF checkbox text gap more closely */
   flex-shrink: 0;
   vertical-align: middle; /* Adjust for better alignment with text */
+  border: 1px solid #000; /* Mimic PDF rect */
+  appearance: none; /* Attempt to remove default styling */
+  -webkit-appearance: none; /* For Safari/Chrome */
 }
 .block .date { font-size: 0.9em; color: #555; margin-top: 1em; text-align: right; }
 .block em { color: #444; font-style: normal; } /* For notes - remove italic */
@@ -792,11 +799,13 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
         const PDF_NOTE_FONT_SIZE_PT = 10;
         const PDF_DATE_FONT_SIZE_PT = 9;
 
-        // Line & Margin constants (mm) - derived from non-PDF CSS
+        // Line & Margin constants (mm)
         const PT_TO_MM = 0.352778;
         const PDF_LINE_SPACING_FACTOR = 1.4; // Match non-PDF CSS line-height
 
+        const PDF_TITLE_MARGIN_TOP_MM = 2; // New: Extra top margin for service name
         const PDF_TITLE_MARGIN_BOTTOM_MM = 2.2; // Approx 0.6em of 10pt
+        const PDF_LOGIN_MARGIN_TOP_MM = 0; // Login follows title directly unless title is absent
         const PDF_LOGIN_MARGIN_BOTTOM_MM = 2.2; // Approx 0.6em of 10pt
         const PDF_CODES_LIST_MARGIN_TOP_MM = 2.8; // Approx 0.8em of 10pt (ul margin-top)
         const PDF_CODE_ITEM_MARGIN_BOTTOM_MM = 1.8; // Approx 0.5em of 10pt (li margin-bottom)
@@ -804,6 +813,8 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
         const PDF_NOTE_MARGIN_TOP_MM = 2.2; // Approx 0.6em (p margin-top)
         const PDF_NOTE_MARGIN_BOTTOM_MM = 2.2; // Approx 0.6em (p margin-bottom)
         // Date is positioned at bottom right; its top margin is effectively the remaining space or a fixed offset from note.
+        const PDF_DATE_MARGIN_TOP_MM = 2.2; // Approx 0.6em (p margin-top)
+        const PDF_DATE_MARGIN_BOTTOM_MM = 2.8; // Approx 0.8em (ul margin-top if codes follow)
 
         const PDF_CHECKBOX_SIZE_MM = 3;
         const PDF_CHECKBOX_TEXT_GAP_MM = 1.5;
@@ -842,131 +853,152 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
             pdf.setDrawColor(0); // Black
             pdf.rect(itemX, blockY, PDF_BLOCK_WIDTH, PDF_BLOCK_HEIGHT);
 
+            let contentDrawn = false; // Flag to track if any content has been drawn to manage top margins
+
             // Service Name
-            pdf.setFont(pdfFontName, "bold"); // Use bold variant
-            pdf.setFontSize(PDF_TITLE_FONT_SIZE_PT);
-            const titleText = itemData.serviceName || "Untitled";
-            const titleLineHeightMm =
-              PDF_TITLE_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
-            pdf.text(titleText, itemX + PDF_BLOCK_PADDING, currentY, {
-              // charSpace: 0.1, // Optional: if you want letter spacing
-            });
-            currentY += titleLineHeightMm + PDF_TITLE_MARGIN_BOTTOM_MM;
+            if (itemData.serviceName) {
+              currentY += PDF_TITLE_MARGIN_TOP_MM; // Apply specific top margin for title
+              pdf.setFont(pdfFontName, "bold");
+              pdf.setTextColor(51, 51, 51); // #333
+              pdf.setFontSize(PDF_TITLE_FONT_SIZE_PT);
+              const titleText = String(itemData.serviceName);
+              const titleLineHeightMm =
+                PDF_TITLE_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
+              pdf.text(titleText, itemX + PDF_BLOCK_PADDING, currentY);
+              currentY += titleLineHeightMm + PDF_TITLE_MARGIN_BOTTOM_MM;
+              contentDrawn = true;
+            }
 
             // Login
-            pdf.setFont(pdfFontName, "normal"); // Switch back to normal weight
-            pdf.setFontSize(PDF_LOGIN_FONT_SIZE_PT);
-            const loginText = itemData.login || "";
-            const loginLineHeightMm =
-              PDF_LOGIN_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
-            // For strong tag, jsPDF doesn't directly support nested font weights in one text call.
-            // We'll render it as normal weight here. If true bold for login is needed, it'd require separate text calls.
-            pdf.text(loginText, itemX + PDF_BLOCK_PADDING, currentY);
-            currentY += loginLineHeightMm + PDF_LOGIN_MARGIN_BOTTOM_MM;
+            if (itemData.login) {
+              if (contentDrawn) currentY += PDF_LOGIN_MARGIN_TOP_MM; // Only add top margin if something was before it
+              pdf.setFont(pdfFontName, "bold");
+              pdf.setTextColor(0, 0, 0);
+              pdf.setFontSize(PDF_LOGIN_FONT_SIZE_PT);
+              const loginText = String(itemData.login);
+              const loginLineHeightMm =
+                PDF_LOGIN_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
+              pdf.text(loginText, itemX + PDF_BLOCK_PADDING, currentY);
+              currentY += loginLineHeightMm + PDF_LOGIN_MARGIN_BOTTOM_MM;
+              contentDrawn = true;
+            }
+
+            // Date - New Position
+            if (itemData.date) {
+              if (contentDrawn) currentY += PDF_DATE_MARGIN_TOP_MM;
+              pdf.setFont(pdfFontName, "normal");
+              pdf.setTextColor(85, 85, 85); // #555
+              pdf.setFontSize(PDF_DATE_FONT_SIZE_PT);
+              const dateText = String(itemData.date);
+              const dateLineHeightMm =
+                PDF_DATE_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
+              // For now, left-align date. Right alignment would need getStringUnitWidth.
+              pdf.text(dateText, itemX + PDF_BLOCK_PADDING, currentY);
+              currentY += dateLineHeightMm + PDF_DATE_MARGIN_BOTTOM_MM;
+              contentDrawn = true;
+            }
 
             // Codes
-            pdf.setFont(pdfFontName, "normal"); // Ensure normal weight for codes
-            currentY += PDF_CODES_LIST_MARGIN_TOP_MM;
-            const codes = itemData.codes || [];
-            const textMaxWidthForCode =
-              PDF_BLOCK_WIDTH -
-              PDF_BLOCK_PADDING * 2 -
-              PDF_CHECKBOX_SIZE_MM -
-              PDF_CHECKBOX_TEXT_GAP_MM;
+            if (itemData.codes && itemData.codes.length > 0) {
+              if (contentDrawn) currentY += PDF_CODES_LIST_MARGIN_TOP_MM;
+              pdf.setFont(pdfFontName, "normal");
+              pdf.setTextColor(0, 0, 0);
 
-            const codesStartY = currentY;
-            let codesContentHeight = 0;
+              const codes = itemData.codes;
+              const textMaxWidthForCode =
+                PDF_BLOCK_WIDTH -
+                PDF_BLOCK_PADDING * 2 -
+                PDF_CHECKBOX_SIZE_MM -
+                PDF_CHECKBOX_TEXT_GAP_MM;
 
-            codes.forEach((code) => {
-              pdf.setFontSize(PDF_CODES_FONT_SIZE_PT);
-              const codeSingleLineHeightMm =
-                PDF_CODES_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
-              const codeLines = pdf.splitTextToSize(code, textMaxWidthForCode);
-              const thisCodeBlockHeight =
-                codeLines.length * codeSingleLineHeightMm +
-                PDF_CODE_ITEM_MARGIN_BOTTOM_MM;
+              const codesStartY = currentY;
+              let codesContentHeight = 0;
 
-              // Simplified overflow check: estimate remaining space for date and note
-              const estimatedDateHeight =
-                PDF_DATE_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR + 5; // 5mm for margin/buffer
-              const estimatedNoteHeight = itemData.note
-                ? PDF_NOTE_FONT_SIZE_PT *
-                    PT_TO_MM *
-                    PDF_LINE_SPACING_FACTOR *
-                    2 +
-                  PDF_NOTE_MARGIN_TOP_MM +
-                  PDF_NOTE_MARGIN_BOTTOM_MM +
-                  5
-                : 0; // rough estimate for 2 lines + margins
-              const maxCodesY =
-                blockY +
-                PDF_BLOCK_HEIGHT -
-                PDF_BLOCK_PADDING -
-                estimatedDateHeight -
-                estimatedNoteHeight -
-                PDF_CODES_LIST_MARGIN_BOTTOM_MM;
-
-              if (
-                currentY + thisCodeBlockHeight > maxCodesY &&
-                codesContentHeight > 0 // Allow at least one code if it fits initially
-              ) {
-                return;
-              }
-
-              // Draw checkbox (simple square)
-              pdf.rect(
-                itemX + PDF_BLOCK_PADDING,
-                currentY - PDF_CHECKBOX_SIZE_MM * 0.75, // Align with text baseline
-                PDF_CHECKBOX_SIZE_MM,
-                PDF_CHECKBOX_SIZE_MM
-              );
-              // No checkmark, as per request for unchecked boxes
-
-              let tempY = currentY;
-              for (const line of codeLines) {
-                pdf.text(
-                  line,
-                  itemX +
-                    PDF_BLOCK_PADDING +
-                    PDF_CHECKBOX_SIZE_MM +
-                    PDF_CHECKBOX_TEXT_GAP_MM,
-                  tempY
+              for (const code of codes) {
+                if (!code) continue; // Skip empty/null codes
+                pdf.setFontSize(PDF_CODES_FONT_SIZE_PT);
+                const codeSingleLineHeightMm =
+                  PDF_CODES_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
+                const codeLines = pdf.splitTextToSize(
+                  String(code),
+                  textMaxWidthForCode
                 );
-                tempY += codeSingleLineHeightMm;
+                const thisCodeBlockHeight =
+                  codeLines.length * codeSingleLineHeightMm +
+                  PDF_CODE_ITEM_MARGIN_BOTTOM_MM;
+
+                // Overflow check for codes (considers space for potential note)
+                const estimatedNoteHeight = itemData.note
+                  ? PDF_NOTE_FONT_SIZE_PT *
+                      PT_TO_MM *
+                      PDF_LINE_SPACING_FACTOR *
+                      2 +
+                    PDF_NOTE_MARGIN_TOP_MM +
+                    PDF_NOTE_MARGIN_BOTTOM_MM +
+                    5
+                  : 0;
+                const maxCodesY =
+                  blockY +
+                  PDF_BLOCK_HEIGHT -
+                  PDF_BLOCK_PADDING -
+                  estimatedNoteHeight -
+                  PDF_CODES_LIST_MARGIN_BOTTOM_MM;
+
+                if (
+                  currentY + thisCodeBlockHeight > maxCodesY &&
+                  codesContentHeight > 0
+                ) {
+                  break;
+                }
+
+                pdf.rect(
+                  itemX + PDF_BLOCK_PADDING,
+                  currentY - PDF_CHECKBOX_SIZE_MM * 0.75,
+                  PDF_CHECKBOX_SIZE_MM,
+                  PDF_CHECKBOX_SIZE_MM
+                );
+
+                let tempY = currentY;
+                for (const line of codeLines) {
+                  pdf.text(
+                    String(line || ""),
+                    itemX +
+                      PDF_BLOCK_PADDING +
+                      PDF_CHECKBOX_SIZE_MM +
+                      PDF_CHECKBOX_TEXT_GAP_MM,
+                    tempY
+                  );
+                  tempY += codeSingleLineHeightMm;
+                }
+                currentY += thisCodeBlockHeight;
+                codesContentHeight += thisCodeBlockHeight;
               }
-              currentY += thisCodeBlockHeight;
-              codesContentHeight += thisCodeBlockHeight;
-            });
-            if (codesContentHeight > 0) {
-              // Only add bottom margin if codes were drawn
-              currentY =
-                codesStartY +
-                codesContentHeight -
-                PDF_CODE_ITEM_MARGIN_BOTTOM_MM +
-                PDF_CODES_LIST_MARGIN_BOTTOM_MM;
-            } else {
-              // No codes drawn, remove the top margin for the list
-              currentY -= PDF_CODES_LIST_MARGIN_TOP_MM;
+
+              if (codesContentHeight > 0) {
+                currentY =
+                  codesStartY +
+                  codesContentHeight -
+                  PDF_CODE_ITEM_MARGIN_BOTTOM_MM +
+                  PDF_CODES_LIST_MARGIN_BOTTOM_MM; // Adjust to be after last item's margin
+                contentDrawn = true;
+              } else if (contentDrawn) {
+                // No codes drawn, but other content was, so remove the list's top margin
+                currentY -= PDF_CODES_LIST_MARGIN_TOP_MM;
+              }
             }
 
             // Note (if exists, position towards bottom)
-            const dateLineHeightMm =
-              PDF_DATE_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
-            const dateAreaHeightWithMargin = itemData.date
-              ? dateLineHeightMm + 5
-              : 0; // 5mm buffer for date margin
-            let noteAvailableYStart = currentY; // Start note after codes
-
             if (itemData.note) {
-              currentY += PDF_NOTE_MARGIN_TOP_MM;
-              pdf.setFont(pdfFontName, "normal"); // No italics for note
+              if (contentDrawn) currentY += PDF_NOTE_MARGIN_TOP_MM;
+              pdf.setFont(pdfFontName, "normal");
+              pdf.setTextColor(68, 68, 68); // #444
               pdf.setFontSize(PDF_NOTE_FONT_SIZE_PT);
               const noteSingleLineHeightMm =
                 PDF_NOTE_FONT_SIZE_PT * PT_TO_MM * PDF_LINE_SPACING_FACTOR;
               const noteLines = pdf.splitTextToSize(
                 itemData.note,
                 PDF_BLOCK_WIDTH - PDF_BLOCK_PADDING * 2
-              );
+              ); // Ensure note is string
               let noteContentHeight = 0;
               for (const line of noteLines) {
                 if (
@@ -974,40 +1006,24 @@ body { font-family: 'NotoSansUnicode', sans-serif; font-weight: normal; } /* App
                   blockY +
                     PDF_BLOCK_HEIGHT -
                     PDF_BLOCK_PADDING -
-                    dateAreaHeightWithMargin
+                    PDF_NOTE_MARGIN_BOTTOM_MM // Ensure note + its bottom margin fits
                 ) {
                   break; // Stop if note overflows into date area
                 }
-                pdf.text(line, itemX + PDF_BLOCK_PADDING, currentY);
+                pdf.text(
+                  String(line || ""),
+                  itemX + PDF_BLOCK_PADDING,
+                  currentY
+                ); // Ensure note line is string
                 currentY += noteSingleLineHeightMm;
                 noteContentHeight += noteSingleLineHeightMm;
               }
               if (noteContentHeight > 0) {
-                currentY += PDF_NOTE_MARGIN_BOTTOM_MM;
-              } else {
-                // No note drawn, remove top margin
+                currentY += PDF_NOTE_MARGIN_BOTTOM_MM; // Add bottom margin only if note was drawn
+                contentDrawn = true;
+              } else if (contentDrawn) {
                 currentY -= PDF_NOTE_MARGIN_TOP_MM;
               }
-            }
-
-            // Date (if exists, position at bottom right)
-            if (itemData.date) {
-              pdf.setFont(pdfFontName, "normal"); // Ensure normal weight for date
-              pdf.setFontSize(PDF_DATE_FONT_SIZE_PT);
-              const dateYPos =
-                blockY +
-                PDF_BLOCK_HEIGHT -
-                PDF_BLOCK_PADDING -
-                dateLineHeightMm * 0.3; // Position baseline slightly above bottom padding edge
-              const dateTextWidth =
-                (pdf.getStringUnitWidth(itemData.date) *
-                  PDF_DATE_FONT_SIZE_PT) /
-                pdf.internal.scaleFactor;
-              pdf.text(
-                itemData.date,
-                itemX + PDF_BLOCK_WIDTH - PDF_BLOCK_PADDING - dateTextWidth,
-                dateYPos
-              );
             }
           });
         }

@@ -736,18 +736,6 @@ body {
         styleElement.appendChild(document.createTextNode(printCSS));
         document.head.appendChild(styleElement);
 
-        const tempRenderDiv = document.createElement("div");
-        // Styles to keep the temporary rendering div off-screen and non-interfering
-        Object.assign(tempRenderDiv.style, {
-          position: "absolute",
-          left: "-3000px", // Far off-screen
-          top: "-3000px",
-          width: "auto", // Will be set by content or specific needs
-          height: "auto",
-          visibility: "hidden", // Can also help prevent flicker/layout shifts
-        });
-        document.body.appendChild(tempRenderDiv);
-
         const pdfPageWidth = 297; // A4 landscape width in mm
         const pdfPageHeight = 210; // A4 landscape height in mm
         const blockNominalHeight = 190; // mm
@@ -755,8 +743,30 @@ body {
         const interBlockMargin = 5; // mm
         const scaleFactor = 96 / 25.4; // Approx pixels per mm for html2canvas windowWidth/Height
 
+        let pdfCurrentPageNum = 1;
+
         for (let i = 0; i < printQueue.length; i += 2) {
-          let pageHtml = `<div class="print-page-container-for-pdf">`; // Start new container for the page's content
+          // Create a new temporary div for each page's content to ensure isolation
+          const pageSpecificTempRenderDiv = document.createElement("div");
+          Object.assign(pageSpecificTempRenderDiv.style, {
+            position: "absolute",
+            left: "-3500px", // Ensure it's far off-screen
+            top: "-3500px",
+            width: "auto", // Will be set by content
+            height: "auto", // Will be set by content
+            // visibility: "hidden", // Rely on off-screen positioning
+          });
+          document.body.appendChild(pageSpecificTempRenderDiv);
+
+          if (pdfCurrentPageNum > 1) {
+            pdf.addPage("a4", "l"); // Add a new page for subsequent content
+            pdf.setPage(pdfCurrentPageNum); // Explicitly set the current page
+            if (base64Font) {
+              // Re-apply font for the new page if custom font is used
+              pdf.setFont(pdfFontName);
+            }
+          }
+          let pageHtml = `<div class="print-page-container-for-pdf">`; // This will be the content of pageSpecificTempRenderDiv
           let blocksOnThisPage = 0;
           let currentPageContentWidth = 0;
 
@@ -780,8 +790,8 @@ body {
           }
           pageHtml += `</div>`;
 
-          tempRenderDiv.innerHTML = pageHtml;
-          const containerElement = tempRenderDiv.firstChild;
+          pageSpecificTempRenderDiv.innerHTML = pageHtml;
+          const containerElement = pageSpecificTempRenderDiv.firstChild; // Get the actual container we just created
 
           // Dynamically set the container's dimensions to tightly wrap its content
           containerElement.style.width = `${currentPageContentWidth}mm`;
@@ -798,25 +808,34 @@ body {
             x_offset = (pdfPageWidth - currentPageContentWidth) / 2;
           }
 
-          await pdf.html(containerElement, {
-            x: x_offset,
-            y: y_offset,
-            width: currentPageContentWidth, // jsPDF's target width for the image on PDF page
-            height: blockNominalHeight, // jsPDF's target height
-            windowWidth: Math.ceil(currentPageContentWidth * scaleFactor),
-            windowHeight: Math.ceil(blockNominalHeight * scaleFactor),
+          // Use html2canvas directly to render the element to a canvas
+          const canvas = await html2canvas(containerElement, {
+            scale: 2, // Increase scale for better resolution in PDF. Adjust as needed.
+            useCORS: true, // Good practice, though font is local via @font-face
+            logging: false, // Suppress html2canvas console logs
+            backgroundColor: null, // Ensures transparency if parts of the element are transparent
           });
+          const imgData = canvas.toDataURL("image/png");
+
+          // Add the generated image to the PDF
+          // Note: addImage uses the current page. If pdfCurrentPageNum > 1, addPage() should have been called.
+          pdf.addImage(
+            imgData,
+            "PNG",
+            x_offset,
+            y_offset,
+            currentPageContentWidth,
+            blockNominalHeight
+          );
 
           if (i + 2 < printQueue.length) {
             // If there are more items for subsequent pages
-            pdf.addPage("a4", "l");
-            if (base64Font) {
-              pdf.setFont(pdfFontName); // Re-apply font for the new page
-            }
+            pdfCurrentPageNum++; // Increment for the next page to be added/set
+            // The addPage and setFont will happen at the start of the next iteration
           }
+          document.body.removeChild(pageSpecificTempRenderDiv); // Clean up this page's specific temporary div
         }
 
-        document.body.removeChild(tempRenderDiv);
         document.head.removeChild(styleElement);
         pdf.save("backup-codes.pdf");
       }

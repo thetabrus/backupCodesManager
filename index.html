@@ -371,11 +371,12 @@
             .querySelectorAll(".code-check")
             .forEach((c) => (c.checked = checked));
         });
-      // Regex to find codes: alphanumeric with at least one digit, supporting Unicode letters (diacritics).
-      // Handles precomposed and decomposed Unicode characters (e.g., letter + combining marks).
-      // Using lookarounds for boundaries due to potential \b issues with some Unicode sequences.
-      const CODE_REGEX =
-        /(?:(?<=^)|(?<=[^\p{L}\p{N}_]))(?=.*\d)(?:[\p{L}0-9]\p{M}*){4,}(?:[ -](?:[\p{L}0-9]\p{M}*){4,})*(?:(?=$)|(?=[^\p{L}\p{N}_]))/gu;
+      // Regex to find potential code candidates: alphanumeric sequences, 4+ chars,
+      // possibly with internal hyphens or spaces. Does not require a digit at this stage.
+      const CODE_CANDIDATE_REGEX =
+        /(?:(?<=^)|(?<=[^\p{L}\p{N}_]))(?:[\p{L}0-9]\p{M}*){4,}(?:[ -](?:[\p{L}0-9]\p{M}*){4,})*(?:(?=$)|(?=[^\p{L}\p{N}_]))/gu;
+      const SPECIAL_CODE_WORDS = /^(?:UŻYTY|USED|JUŻ UŻYTY)$/i; // Case-insensitive, whole word
+
       function parseRaw(raw) {
         const lines = raw.split(/\r?\n/);
         let service = "",
@@ -383,35 +384,148 @@
           note = "",
           dateText = "",
           codes = [];
+        let dateFoundInInput = false;
+
         lines.forEach((l) => {
-          let t = l.trim();
-          if (!t) return;
-          t = t.replace(/^\d+\.[ \t]*/, "").trim();
-          if (/\b(?:wygenerowano|generated)[:]?/i.test(t)) {
-            dateText = t.split(/[:]/).slice(1).join(":").trim();
+          let originalTrimmedLine = l.trim();
+          if (!originalTrimmedLine) return;
+
+          // 1. Date Check
+          // Content for date check should be after stripping potential list markers.
+          let contentForDateCheck = originalTrimmedLine;
+          if (/^[*\-]\s/.test(originalTrimmedLine)) {
+            contentForDateCheck = originalTrimmedLine
+              .replace(/^[*\-]\s*/, "")
+              .trim();
+          } else if (/^\d+\.\s/.test(originalTrimmedLine)) {
+            contentForDateCheck = originalTrimmedLine
+              .replace(/^\d+\.\s*/, "")
+              .trim();
+          }
+          if (/\b(?:wygenerowano|generated)\s*:/i.test(contentForDateCheck)) {
+            dateText = contentForDateCheck.split(/:(.+)/, 2)[1]?.trim() || "";
+            dateFoundInInput = true;
             return;
           }
-          if (/^\S+@\S+\.\S+$/.test(t) || /^\(.+@.+\)$/.test(t)) {
-            login = t.replace(/^[()]+|[()]+$/g, "");
+
+          // 2. Login check (can also be prefixed, strip markers before checking)
+          let loginCandidateLine = originalTrimmedLine;
+          loginCandidateLine = loginCandidateLine
+            .replace(/^\d+\.[ \t]*/, "")
+            .trim(); // Strip "1. "
+          loginCandidateLine = loginCandidateLine
+            .replace(/^[*\-]\s*/, "")
+            .trim(); // Strip "* " or "- "
+          if (
+            /^\S+@\S+\.\S+$/.test(loginCandidateLine) ||
+            /^\(.+@.+\)$/.test(loginCandidateLine)
+          ) {
+            login = loginCandidateLine.replace(/^[()]+|[()]+$/g, "");
             return;
           }
-          if (/^[*\-]\s/.test(t)) {
-            note += t.replace(/^[*\-]\s*/, "") + " ";
+
+          // For code, note, service:
+          let contentForProcessing = originalTrimmedLine;
+          const startsWithBullet = /^[*\-]\s/.test(originalTrimmedLine);
+          const startsWithNumberList = /^\d+\.[ \t]/.test(originalTrimmedLine);
+
+          if (startsWithBullet) {
+            contentForProcessing = originalTrimmedLine
+              .replace(/^[*\-]\s*/, "")
+              .trim();
+          } else if (startsWithNumberList) {
+            contentForProcessing = originalTrimmedLine
+              .replace(/^\d+\.[ \t]*/, "")
+              .trim();
+          }
+
+          // 3. Code Detection
+          const potentialCodeTokens =
+            contentForProcessing.match(CODE_CANDIDATE_REGEX);
+          let actualCodesInLine = [];
+          if (potentialCodeTokens) {
+            actualCodesInLine = potentialCodeTokens.filter(
+              (token) =>
+                /\d/.test(token) || SPECIAL_CODE_WORDS.test(token.trim())
+            );
+          }
+
+          if (actualCodesInLine.length > 0) {
+            if (startsWithNumberList) {
+              // Numbered lists are strong indicators of codes
+              actualCodesInLine.forEach((tok) => {
+                let codeToAdd = tok.trim();
+                if (SPECIAL_CODE_WORDS.test(codeToAdd)) codeToAdd = "UŻYTY";
+                codes.push(codeToAdd);
+              });
+              return;
+            }
+
+            // For bulleted or non-prefixed lines, check if content is mostly codes
+            let tempRemainder = contentForProcessing;
+            actualCodesInLine.forEach((code) => {
+              // Use a regex to replace the specific code as a whole word/unit, case-insensitively for removal
+              const codeRegex = new RegExp(
+                `\\b${code.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
+                "gi"
+              );
+              tempRemainder = tempRemainder.replace(codeRegex, "");
+            });
+            tempRemainder = tempRemainder.replace(/\b(?:JUŻ|ALREADY)\b/gi, ""); // Remove "JUŻ" etc.
+            tempRemainder = tempRemainder.replace(/\d+\.\s*/g, ""); // Remove "6. " type markers within content
+            tempRemainder = tempRemainder.trim().replace(/[.,;:!?]$/, "");
+
+            if (tempRemainder.length === 0) {
+              // If what's left is empty, it was purely codes
+              actualCodesInLine.forEach((tok) => {
+                let codeToAdd = tok.trim();
+                if (SPECIAL_CODE_WORDS.test(codeToAdd)) codeToAdd = "UŻYTY";
+                codes.push(codeToAdd);
+              });
+              return;
+            }
+            // If bulleted and not purely codes, but still short (e.g. "* UŻYTY", "* code123")
+            if (
+              startsWithBullet &&
+              contentForProcessing.split(/\s+/).filter(Boolean).length <= 3 &&
+              tempRemainder.length < contentForProcessing.length / 2
+            ) {
+              actualCodesInLine.forEach((tok) => {
+                let codeToAdd = tok.trim();
+                if (SPECIAL_CODE_WORDS.test(codeToAdd)) codeToAdd = "UŻYTY";
+                codes.push(codeToAdd);
+              });
+              return;
+            }
+          }
+
+          // 4. Note Check (applies if it's a bulleted line not caught as codes or date)
+          if (/^[*\-]\s/.test(originalTrimmedLine)) {
+            // contentForProcessing is already the bullet's content
+            note += contentForProcessing + " ";
             return;
           }
-          const found = t.match(CODE_REGEX);
-          if (found) {
-            found.forEach((tok) => codes.push(tok.trim()));
-            return;
-          }
-          if (!service && t.length < 50) {
-            service = t;
+
+          // 5. Service Name Fallback
+          if (!startsWithBullet && !startsWithNumberList) {
+            if (
+              !service &&
+              contentForProcessing.length > 0 &&
+              contentForProcessing.length < 70
+            ) {
+              if (
+                contentForProcessing.split(/\s+/).filter(Boolean).length <= 5
+              ) {
+                service = contentForProcessing;
+                return;
+              }
+            }
           }
         });
-        let dateGenerated = false;
-        if (!dateText) {
+
+        if (!dateFoundInInput && !dateText) {
+          // If no date was found from input and not set by other means
           dateText = new Date().toLocaleDateString();
-          dateGenerated = true;
         }
         return {
           service,
@@ -419,7 +533,7 @@
           note: note.trim(),
           date: dateText,
           codes,
-          dateGenerated,
+          dateGenerated: !dateFoundInInput,
         };
       }
       document.getElementById("parseBtn").addEventListener("click", () => {

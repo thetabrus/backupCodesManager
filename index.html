@@ -529,13 +529,13 @@ body {
   align-items: center;
   min-height: 100vh;
 }
-.print-page-container { /* For previewing pairs */
+.print-page-container { /* Container for one or two blocks in preview */
   display: flex;
   flex-direction: row;
-  justify-content: center; /* Center blocks in the container for preview */
+  justify-content: center; /* Centers the block(s) within this container */
   align-items: flex-start;
   margin-bottom: 20px; /* Space between pairs in preview */
-  width: calc(140mm * 2 + 20mm); /* Approximate width for two blocks + spacing */
+  /* Width will be determined by its content (one or two blocks with their margins) */
 }
 .block {
   width: 140mm; /* Approx. A5 landscape width */
@@ -564,13 +564,30 @@ body {
 @media print {
   body { background-color: transparent; display: block; min-height: auto; margin:0; }
   .print-page-container {
-    page-break-after: always; /* Each container (pair of blocks) gets a new page */
-    margin: 0;
-    display: flex; /* Use flex for layout on print page */
-    justify-content: flex-start; /* Align blocks to the left */
-    width: auto; /* Take full printable width */
+    /* General styles for print-page-container */
+    margin: 0; /* Reset preview margin */
+    padding: 6mm; /* Overall page margin, similar to PDF's x_offset */
+    box-sizing: border-box;
+    width: 297mm; /* A4 landscape width */
+    height: 210mm; /* A4 landscape height */
+    display: flex;
+    justify-content: flex-start; /* Align block(s) to the left of the padded area */
+    align-items: center; /* Vertically center block(s) within the padded area */
   }
-  .block { margin: 0 5mm 5mm 0; box-shadow: none; /* Spacing for blocks on printed page */ }
+  .print-page-container:not(:last-of-type) {
+    page-break-after: always; /* Add page break only if it's NOT the last container of its type */
+  }
+  .block {
+    margin: 0; /* Reset preview margin, rely on container padding and flex gap */
+    box-shadow: none;
+    border: 1px solid #000; /* Match PDF border */
+    /* width: 140mm and height: 190mm are already set */
+    overflow: hidden; /* Good for print consistency */
+  }
+  /* Add margin to the first block if it's not the only block on the page */
+  .print-page-container > .block:first-child:not(:last-child) {
+    margin-right: 5mm; /* Space between the two blocks */
+  }
 }
 </style></head><body>${allBlocksHtml}<script>window.print()<\/script></body></html>`
           );
@@ -689,16 +706,15 @@ body {
             display: flex;
             justify-content: flex-start; /* Blocks align to the left within this container */
             /* width and height will be set via JS to fit content tightly */
-            box-sizing: border-box;
-            /* No padding here; offsets will handle page margins */
+            box-sizing: border-box; /* No padding here; offsets will handle page margins */
             overflow: hidden;
           }
           .block {
             font-family: '${
               base64Font ? pdfFontName : "sans-serif"
             }'; /* Use embedded font, fallback to sans-serif */
-            width: 140mm; 
-            height: 190mm;
+            width: 138mm;  /* Slightly reduced width */
+            height: 188mm; /* Slightly reduced height */
             box-sizing: border-box;
             border: 1px solid #000;
             /* margin-right is now handled by generateBlockHtml for the first block in a pair */
@@ -738,12 +754,10 @@ body {
 
         const pdfPageWidth = 297; // A4 landscape width in mm
         const pdfPageHeight = 210; // A4 landscape height in mm
-        const blockNominalHeight = 190; // mm
-        const blockNominalWidth = 140; // mm
+        const blockNominalHeight = 188; // mm - Updated to match CSS
+        const blockNominalWidth = 138; // mm - Updated to match CSS
         const interBlockMargin = 5; // mm
         const scaleFactor = 96 / 25.4; // Approx pixels per mm for html2canvas windowWidth/Height
-
-        let pdfCurrentPageNum = 1;
 
         for (let i = 0; i < printQueue.length; i += 2) {
           // Create a new temporary div for each page's content to ensure isolation
@@ -758,14 +772,13 @@ body {
           });
           document.body.appendChild(pageSpecificTempRenderDiv);
 
-          if (pdfCurrentPageNum > 1) {
-            pdf.addPage("a4", "l"); // Add a new page for subsequent content
-            pdf.setPage(pdfCurrentPageNum); // Explicitly set the current page
+          // If it's not the very first page, add a new page before rendering content
+          if (i > 0) {
+            pdf.addPage("a4", "l");
             if (base64Font) {
-              // Re-apply font for the new page if custom font is used
               pdf.setFont(pdfFontName);
-            }
-          }
+            } // Closes if (base64Font)
+          } // Closes if (i > 0)
           let pageHtml = `<div class="print-page-container-for-pdf">`; // This will be the content of pageSpecificTempRenderDiv
           let blocksOnThisPage = 0;
           let currentPageContentWidth = 0;
@@ -814,20 +827,17 @@ body {
 
           // Add the generated image to the PDF
           // Note: addImage uses the current page. If pdfCurrentPageNum > 1, addPage() should have been called.
+          // pdf.setPage(pdfPageCounter); // addPage makes the new page active, setPage is not needed here
           pdf.addImage(
             imgData,
             "PNG",
+            // Use the calculated offsets and dimensions
             x_offset,
             y_offset,
             currentPageContentWidth,
             blockNominalHeight
           );
 
-          if (i + 2 < printQueue.length) {
-            // If there are more items for subsequent pages
-            pdfCurrentPageNum++; // Increment for the next page to be added/set
-            // The addPage and setFont will happen at the start of the next iteration
-          }
           document.body.removeChild(pageSpecificTempRenderDiv); // Clean up this page's specific temporary div
         }
 

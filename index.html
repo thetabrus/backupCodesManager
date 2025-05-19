@@ -279,12 +279,14 @@
         "checkDate",
       ];
 
-      let pdfModeActive = false;
+      let pdfModeActive = true; // Default to true
       document
         .getElementById("pdfModeCheckbox")
         .addEventListener("change", function (event) {
           pdfModeActive = event.target.checked;
         });
+      // Ensure the checkbox reflects the default state on load
+      document.getElementById("pdfModeCheckbox").checked = pdfModeActive;
 
       // Style for the file input label to look like a button
       const style = document.createElement("style");
